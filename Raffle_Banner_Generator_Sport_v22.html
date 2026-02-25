@@ -1,0 +1,2212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Raffle Banner Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold: #f6ae2d; --gold-light: #f9c86a; --gold-dark: #c98a10;
+      --dark: #2e2f31; --surface: #3a3b3e; --surface-2: #434446; --surface-3: #4e5052;
+      --text: #f0f0f0; --text-muted: #b0b1b3;
+      --border: rgba(246,174,45,0.28); --border-soft: rgba(255,255,255,0.08);
+      --green: #59b55e; --purple: #8075ff;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'DM Sans',sans-serif; background:var(--dark);
+      background-image:radial-gradient(ellipse at 15% 40%,rgba(89,181,94,.07) 0%,transparent 55%),
+        radial-gradient(ellipse at 85% 10%,rgba(128,117,255,.12) 0%,transparent 50%);
+      padding:36px 20px 60px; min-height:100vh; color:var(--text);
+    }
+    .container { max-width:1060px; margin:0 auto; }
+    .app-header { text-align:center; margin-bottom:40px; }
+    .ticket-icon { display:inline-block; font-size:2.4rem; margin-bottom:10px; filter:drop-shadow(0 0 12px rgba(246,174,45,.4)); }
+    .app-header h1 {
+      font-family:'Playfair Display',serif; font-size:2.8rem; font-weight:900;
+      background:linear-gradient(135deg,var(--gold-light) 0%,var(--gold) 45%,#c98a10 100%);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1.1;
+    }
+    .app-header .subtitle { color:var(--text-muted); font-size:.78rem; letter-spacing:.18em; text-transform:uppercase; margin-top:8px; }
+    .header-rule { display:flex; align-items:center; justify-content:center; gap:10px; margin-top:18px; }
+    .header-rule .line { height:1px; width:70px; }
+    .header-rule .line-l { background:linear-gradient(90deg,transparent,var(--gold)); }
+    .header-rule .line-r { background:linear-gradient(90deg,var(--gold),transparent); }
+    .header-rule .gem { width:7px; height:7px; background:var(--gold); transform:rotate(45deg); box-shadow:0 0 6px rgba(246,174,45,.6); }
+    .card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:28px 32px; margin-bottom:18px; box-shadow:0 2px 0 rgba(246,174,45,.08) inset, 0 8px 40px rgba(0,0,0,.35); }
+    .section-label { font-size:.65rem; font-weight:600; letter-spacing:.2em; text-transform:uppercase; color:var(--gold); margin-bottom:22px; display:flex; align-items:center; gap:12px; }
+    .section-label::after { content:''; flex:1; height:1px; background:var(--border); }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:18px; }
+    .form-group { display:flex; flex-direction:column; }
+    .form-group.full-width { grid-column:1/-1; }
+    label { font-weight:500; margin-bottom:6px; color:var(--text-muted); font-size:.75rem; letter-spacing:.07em; text-transform:uppercase; }
+    label .hint { font-size:.85em; font-weight:400; opacity:.7; text-transform:none; letter-spacing:0; }
+    input[type=text], input[type=number], input[type=date], input[type=time], select {
+      padding:11px 14px; background:var(--surface-2); border:1px solid var(--border-soft); border-radius:8px;
+      font-size:.93em; font-family:'DM Sans',sans-serif; color:var(--text);
+      transition:border-color .2s,box-shadow .2s,background .2s; -webkit-appearance:none;
+    }
+    input:focus, select:focus { outline:none; border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,168,76,.1); background:var(--surface-3); }
+    select option { background:var(--surface-2); color:var(--text); }
+    input[type=date]::-webkit-calendar-picker-indicator, input[type=time]::-webkit-calendar-picker-indicator { filter:invert(.7) sepia(.4) saturate(3) hue-rotate(10deg); cursor:pointer; }
+    input[type=file] { padding:10px 14px; border:1px dashed rgba(246,174,45,.35); border-radius:8px; cursor:pointer; background:var(--surface-2); color:var(--text-muted); font-family:'DM Sans',sans-serif; font-size:.86em; transition:border-color .2s,background .2s; }
+    input[type=file]:hover { border-color:var(--gold); background:var(--surface-3); }
+    input[type=file]:disabled { opacity:.35; cursor:not-allowed; }
+
+    /* Mode switcher */
+    .mode-switcher { display:flex; background:var(--surface-2); border:1px solid var(--border-soft); border-radius:12px; padding:5px; margin-bottom:22px; gap:4px; }
+    .mode-btn { flex:1; padding:11px 16px; border:none; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:.82rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; transition:all .25s; background:transparent; color:var(--text-muted); margin-top:0; box-shadow:none; }
+    .mode-btn:hover { color:var(--text); background:rgba(255,255,255,.05); transform:none; box-shadow:none; filter:none; }
+    .mode-btn.active { background:linear-gradient(135deg,var(--purple) 0%,#6a5ee0 50%,#4f45b8 100%); color:#fff; box-shadow:0 4px 16px rgba(128,117,255,.35); transform:none; filter:none; }
+
+    /* Sport grid */
+    .sport-selector-section { display:none; margin-bottom:20px; }
+    .sport-selector-section.visible { display:block; }
+    .sport-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(88px,1fr)); gap:8px; }
+    .sport-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; padding:10px 6px; border:1px solid var(--border-soft); border-radius:10px; background:var(--surface-2); cursor:pointer; transition:all .2s; margin-top:0; font-size:.7rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--text-muted); box-shadow:none; }
+    .sport-btn:hover { border-color:rgba(255,255,255,.2); background:var(--surface-3); color:var(--text); transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,.3); filter:none; }
+    .sport-btn.active { border-color:var(--gold); background:rgba(246,174,45,.12); color:var(--gold); box-shadow:0 0 0 1px rgba(246,174,45,.3),0 4px 16px rgba(246,174,45,.15); transform:translateY(-1px); filter:none; }
+    .sport-btn .sport-emoji { font-size:1.6rem; line-height:1; }
+
+    /* Toggle */
+    .toggle-section { background:var(--surface-2); border:1px solid var(--border-soft); padding:18px 22px; border-radius:10px; margin-bottom:22px; }
+    .toggle-header { display:flex; align-items:center; gap:14px; cursor:pointer; user-select:none; }
+    .toggle-switch { position:relative; width:46px; height:24px; background:rgba(255,255,255,.08); border-radius:12px; transition:background .3s; border:1px solid rgba(255,255,255,.12); flex-shrink:0; }
+    .toggle-switch.active { background:linear-gradient(135deg,var(--green) 0%,#3d8a42 100%); border-color:var(--green); }
+    .toggle-switch::after { content:''; position:absolute; width:18px; height:18px; background:white; border-radius:50%; top:2px; left:2px; transition:left .3s; box-shadow:0 1px 4px rgba(0,0,0,.4); }
+    .toggle-switch.active::after { left:24px; }
+    .toggle-label { font-weight:600; color:var(--text); font-size:.93em; }
+    .additional-fields { display:none; animation:fadeSlide .3s ease-out; margin-top:20px; padding-top:20px; border-top:1px solid var(--border-soft); }
+    .additional-fields.visible { display:block; }
+    @keyframes fadeSlide { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+    .package-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+    .package-row input { flex:1; }
+    .package-row .for-label { color:var(--text-muted); font-size:.88em; white-space:nowrap; }
+    .input-prefix-wrap { display:flex; align-items:center; }
+    .input-prefix-wrap input { flex:1; border-radius:0 6px 6px 0; border-left:none; min-width:0; }
+    .input-prefix { background:#f4f4f4; border:1px solid #ddd; border-right:none; border-radius:6px 0 0 6px; padding:8px 9px; font-size:14px; color:#444; line-height:1.4; white-space:nowrap; }
+    .package-row .remove-package { background:rgba(220,80,80,.15); color:#ff7070; border:1px solid rgba(220,80,80,.3); border-radius:50%; width:30px; height:30px; font-size:1.3em; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center; line-height:1; margin-top:0; flex-shrink:0; transition:background .2s,transform .15s; }
+    .package-row .remove-package:hover { background:rgba(220,80,80,.3); transform:scale(1.1); box-shadow:none; }
+    #packageContainer { margin-bottom:8px; }
+    button { background:linear-gradient(135deg,var(--purple) 0%,#6a5ee0 50%,#4f45b8 100%); color:#fff; border:none; padding:13px 30px; font-size:.85em; font-weight:700; font-family:'DM Sans',sans-serif; letter-spacing:.1em; text-transform:uppercase; border-radius:8px; cursor:pointer; transition:transform .18s,box-shadow .18s,filter .18s; margin-top:16px; }
+    button:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(128,117,255,.35); filter:brightness(1.07); }
+    button:active { transform:translateY(0); box-shadow:none; }
+    .btn-generate { display:block; width:100%; padding:17px; font-size:.95em; letter-spacing:.15em; margin-top:0; border-radius:10px; position:relative; overflow:hidden; }
+    .btn-generate::before { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.15) 50%,transparent 100%); transform:translateX(-100%); transition:transform .6s; }
+    .btn-generate:hover::before { transform:translateX(100%); }
+    .btn-add { padding:9px 20px; font-size:.8em; margin-top:8px; }
+    .preview-container { text-align:center; margin-top:28px; padding-top:28px; border-top:1px solid var(--border); }
+    .preview-label { font-size:.65rem; letter-spacing:.2em; text-transform:uppercase; color:var(--text-muted); margin-bottom:12px; }
+    #preview { border-radius:12px; display:block; max-width:100%; height:auto; box-shadow:0 0 0 1px rgba(246,174,45,.15),0 12px 60px rgba(0,0,0,.7); }
+    #downloadLink { display:inline-block; background:linear-gradient(135deg,var(--green) 0%,#3d8a42 50%,#2d6e32 100%); color:#fff; padding:13px 36px; text-decoration:none; border-radius:8px; margin-top:20px; font-weight:700; font-family:'DM Sans',sans-serif; letter-spacing:.1em; text-transform:uppercase; font-size:.88em; transition:transform .18s,box-shadow .18s; }
+    #downloadLink:hover { transform:translateY(-2px); box-shadow:0 6px 24px rgba(89,181,94,.35); }
+    .action-row { padding:24px 0 0; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="app-header">
+    <div class="ticket-icon">🎟️</div>
+    <h1>Raffle Banner Generator</h1>
+    <p class="subtitle">Professional Sport Banner Design</p>
+    <div class="header-rule">
+      <span class="line line-l"></span><span class="gem"></span>
+      <span class="gem" style="width:5px;height:5px;opacity:.5"></span>
+      <span class="gem"></span><span class="line line-r"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="section-label">Banner Mode</p>
+    <div class="mode-switcher">
+      <button type="button" class="mode-btn active" id="modeStandard" onclick="setMode('standard')">🎟️ Standard Banner</button>
+      <button type="button" class="mode-btn" id="modeSport" onclick="setMode('sport')">🏆 Sport Banner</button>
+    </div>
+    <div class="sport-selector-section" id="sportSelectorSection">
+      <p class="section-label">Select Sport</p>
+      <div class="sport-grid" id="sportGrid">
+        <button type="button" class="sport-btn active" data-sport="hockey" onclick="selectSport(this)"><span class="sport-emoji">🏒</span>Hockey</button>
+        <button type="button" class="sport-btn" data-sport="soccer" onclick="selectSport(this)"><span class="sport-emoji"><svg width="26" height="26" viewBox="0 0 26 26" style="display:block;margin:0 auto">
+  <defs><clipPath id="ballClip"><circle cx="13" cy="13" r="11.5"/></clipPath></defs>
+  <circle cx="13" cy="13" r="11.5" fill="#f5f5f5" stroke="#aaa" stroke-width="0.5"/>
+  <g clip-path="url(#ballClip)" stroke="#1a1a1a" stroke-width="0.7" stroke-linejoin="round">
+    <!-- 5 hexagons (white) interleaved between pentagons, offset 36deg -->
+    <polygon points="13,7.1 15.2,8.8 14.3,11.4 11.7,11.4 10.8,8.8" fill="#f5f5f5"/>
+    <polygon points="17.9,10.3 20.1,10.3 21,13 19.3,15 17.1,14.1" fill="#f5f5f5"/>
+    <polygon points="16.5,17.8 18.3,16.3 19.3,17.5 18.6,20 16.1,20" fill="#f5f5f5"/>
+    <polygon points="9.9,20 7.4,20 6.7,17.5 7.7,16.3 9.5,17.8" fill="#f5f5f5"/>
+    <polygon points="5,14.1 2.8,13 3.7,10.3 5.9,10.3 6.9,13" fill="#f5f5f5"/>
+    <!-- centre pentagon (black) -->
+    <polygon points="13,9.8 15.1,11.3 14.3,13.7 11.7,13.7 10.9,11.3" fill="#1a1a1a"/>
+    <!-- 5 outer pentagons (black) -->
+    <polygon points="13,2.5 15.4,4.3 14.5,7 11.5,7 10.6,4.3" fill="#1a1a1a"/>
+    <polygon points="20.6,7.7 23,9.5 22.6,12.6 19.8,13.5 18,11.4" fill="#1a1a1a"/>
+    <polygon points="18.9,20.7 16.8,22.8 13.9,21.9 13.5,18.9 16,17.5" fill="#1a1a1a"/>
+    <polygon points="7.1,20.7 6.5,17.5 9,18.9 12.5,18.9 12.1,21.9" fill="#1a1a1a"/>
+    <polygon points="5.4,7.7 8,11.4 5.2,13.5 2.4,12.6 2,9.5" fill="#1a1a1a"/>
+  </g>
+</svg></span>Soccer</button>
+        <button type="button" class="sport-btn" data-sport="football" onclick="selectSport(this)"><span class="sport-emoji">🏈</span>Football</button>
+        <button type="button" class="sport-btn" data-sport="baseball" onclick="selectSport(this)"><span class="sport-emoji">⚾</span>Baseball</button>
+        <button type="button" class="sport-btn" data-sport="softball" onclick="selectSport(this)"><span class="sport-emoji">🥎</span>Softball</button>
+        <button type="button" class="sport-btn" data-sport="basketball" onclick="selectSport(this)"><span class="sport-emoji">🏀</span>Basketball</button>
+        <button type="button" class="sport-btn" data-sport="waterpolo" onclick="selectSport(this)"><span class="sport-emoji">🤽</span>Water Polo</button>
+        <button type="button" class="sport-btn" data-sport="volleyball" onclick="selectSport(this)"><span class="sport-emoji">🏐</span>Volleyball</button>
+        <button type="button" class="sport-btn" data-sport="ringette" onclick="selectSport(this)"><span class="sport-emoji"><svg width="28" height="28" viewBox="0 0 28 28" style="display:block;margin:0 auto"><defs><radialGradient id="ringetteGrad" cx="36%" cy="34%" r="58%"><stop offset="0%" stop-color="#7ecbf0"/><stop offset="38%" stop-color="#3a9ad4"/><stop offset="78%" stop-color="#2176ae"/><stop offset="100%" stop-color="#155e8a"/></radialGradient></defs><path fill-rule="evenodd" fill="url(#ringetteGrad)" d="M14,1 A13,13 0 1,0 14.001,1 M14,9 A5,5 0 1,1 13.999,9 Z"/><path fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="1.8" stroke-linecap="round" d="M6.5,7 A9,9 0 0,1 13,5"/></svg></span>Ringette</button>
+        <button type="button" class="sport-btn" data-sport="curling" onclick="selectSport(this)"><span class="sport-emoji">🥌</span>Curling</button>
+        <button type="button" class="sport-btn" data-sport="gymnastics" onclick="selectSport(this)"><span class="sport-emoji">🤸</span>Gymnastics</button>
+        <button type="button" class="sport-btn" data-sport="golf" onclick="selectSport(this)"><span class="sport-emoji"><svg width="26" height="26" viewBox="0 0 26 26" style="display:block;margin:0 auto">
+  <defs>
+    <radialGradient id="golfBallGrad" cx="38%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#cccccc"/>
+    </radialGradient>
+  </defs>
+  <circle cx="13" cy="13" r="11" fill="url(#golfBallGrad)" stroke="#bbb" stroke-width="0.5"/>
+  <!-- dimples -->
+  <circle cx="9"  cy="9"  r="1.3" fill="rgba(0,0,0,0.13)"/>
+  <circle cx="13" cy="7"  r="1.3" fill="rgba(0,0,0,0.13)"/>
+  <circle cx="17" cy="9"  r="1.3" fill="rgba(0,0,0,0.13)"/>
+  <circle cx="19" cy="13" r="1.3" fill="rgba(0,0,0,0.13)"/>
+  <circle cx="17" cy="17" r="1.3" fill="rgba(0,0,0,0.13)"/>
+  <circle cx="13" cy="19" r="1.3" fill="rgba(0,0,0,0.13)"/>
+  <circle cx="9"  cy="17" r="1.3" fill="rgba(0,0,0,0.13)"/>
+  <circle cx="7"  cy="13" r="1.3" fill="rgba(0,0,0,0.13)"/>
+  <circle cx="11" cy="13" r="1.3" fill="rgba(0,0,0,0.13)"/>
+  <circle cx="15" cy="13" r="1.3" fill="rgba(0,0,0,0.13)"/>
+</svg></span>Golf</button>
+        <button type="button" class="sport-btn" data-sport="figureskating" onclick="selectSport(this)"><span class="sport-emoji"><svg width="26" height="26" viewBox="0 0 26 26" style="display:block;margin:0 auto">
+  <!-- Figure skate — side view, white boot, black outline -->
+  <!-- Main boot body -->
+  <path d="M4,18 L4,10 C4,6 6,4 9,3.5 C10.5,3.2 12,3 12,3 C13,3 14,3.5 14,5 L14,11 C17,10.5 20,11 21,13 C22,14.5 21.5,16.5 20,17.5 L18,18 Z"
+        fill="white" stroke="#1a1a1a" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- High ankle back curve -->
+  <path d="M4,10 C3.5,8 4.5,5.5 7,4.2"
+        fill="none" stroke="#1a1a1a" stroke-width="1.0" stroke-linecap="round"/>
+  <!-- Toe cap curve -->
+  <path d="M14,11 C16,10 19.5,10.5 21,13"
+        fill="none" stroke="#1a1a1a" stroke-width="0.8" stroke-linecap="round"/>
+  <!-- Lace eyelets (dots down the front) -->
+  <circle cx="12.2" cy="4.8"  r="0.6" fill="#1a1a1a"/>
+  <circle cx="12.0" cy="6.5"  r="0.6" fill="#1a1a1a"/>
+  <circle cx="11.8" cy="8.2"  r="0.6" fill="#1a1a1a"/>
+  <circle cx="11.6" cy="9.8"  r="0.6" fill="#1a1a1a"/>
+  <!-- Sole / heel block -->
+  <rect x="3.5" y="17.5" width="17" height="2" rx="0.8" fill="white" stroke="#1a1a1a" stroke-width="1.0"/>
+  <!-- Heel block (darker) -->
+  <rect x="3.5" y="17.5" width="4" height="2.2" rx="0.5" fill="#1a1a1a"/>
+  <!-- Blade — long, slightly curved, extending past toe -->
+  <path d="M2.5,19.5 Q11,18.8 22,19.5" fill="none" stroke="#1a1a1a" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Toe picks (serrations at front of blade) -->
+  <line x1="20.5" y1="19.3" x2="21.5" y2="17.8" stroke="#1a1a1a" stroke-width="1.0" stroke-linecap="round"/>
+  <line x1="21.8" y1="19.4" x2="22.8" y2="17.9" stroke="#1a1a1a" stroke-width="1.0" stroke-linecap="round"/>
+</svg></span>Figure Skating</button>
+        <button type="button" class="sport-btn" data-sport="lacrosse" onclick="selectSport(this)"><span class="sport-emoji"><svg width="26" height="26" viewBox="0 0 26 26" style="display:block;margin:0 auto">
+  <!-- Lacrosse stick head (D-shape pocket) -->
+  <path d="M13,2 C17.5,2 21,5.5 21,10 C21,15 17,18 13,19 C9,18 5,15 5,10 C5,5.5 8.5,2 13,2 Z"
+        fill="none" stroke="#5d4037" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Mesh horizontal strings -->
+  <line x1="7.5"  y1="8"  x2="18.5" y2="8"  stroke="#8d6e63" stroke-width="1.1" opacity="0.8"/>
+  <line x1="6.5"  y1="11" x2="19.5" y2="11" stroke="#8d6e63" stroke-width="1.1" opacity="0.8"/>
+  <line x1="6.5"  y1="14" x2="19.5" y2="14" stroke="#8d6e63" stroke-width="1.1" opacity="0.8"/>
+  <line x1="7.5"  y1="17" x2="18.5" y2="17" stroke="#8d6e63" stroke-width="1.1" opacity="0.8"/>
+  <!-- Mesh vertical strings -->
+  <line x1="9"  y1="2.5" x2="9"  y2="18.5" stroke="#8d6e63" stroke-width="1.1" opacity="0.7"/>
+  <line x1="13" y1="2"   x2="13" y2="19"   stroke="#8d6e63" stroke-width="1.1" opacity="0.7"/>
+  <line x1="17" y1="2.5" x2="17" y2="18.5" stroke="#8d6e63" stroke-width="1.1" opacity="0.7"/>
+  <!-- Handle -->
+  <line x1="13" y1="19" x2="13" y2="25" stroke="#5d4037" stroke-width="3" stroke-linecap="round"/>
+</svg></span>Lacrosse</button>
+        <button type="button" class="sport-btn" data-sport="rugby" onclick="selectSport(this)"><span class="sport-emoji"><svg width="26" height="26" viewBox="0 0 26 26" style="display:block;margin:0 auto">
+  <!-- Rugby ball — prolate spheroid, brown with white lace -->
+  <ellipse cx="13" cy="13" rx="10.5" ry="6.5" fill="#8B4513" stroke="#5C2D0A" stroke-width="1.0"/>
+  <!-- Seam lines -->
+  <path d="M2.5,13 Q13,8 23.5,13" fill="none" stroke="#5C2D0A" stroke-width="0.7"/>
+  <path d="M2.5,13 Q13,18 23.5,13" fill="none" stroke="#5C2D0A" stroke-width="0.7"/>
+  <!-- Lace -->
+  <line x1="13" y1="9.5" x2="13" y2="16.5" stroke="white" stroke-width="1.0"/>
+  <line x1="11" y1="10.8" x2="15" y2="10.8" stroke="white" stroke-width="0.9" stroke-linecap="round"/>
+  <line x1="11" y1="12.5" x2="15" y2="12.5" stroke="white" stroke-width="0.9" stroke-linecap="round"/>
+  <line x1="11" y1="14.2" x2="15" y2="14.2" stroke="white" stroke-width="0.9" stroke-linecap="round"/>
+  <!-- Highlight -->
+  <ellipse cx="9" cy="10.5" rx="3" ry="1.8" fill="rgba(255,200,150,0.18)" transform="rotate(-15,9,10.5)"/>
+</svg></span>Rugby</button>
+        <button type="button" class="sport-btn" data-sport="tennis" onclick="selectSport(this)"><span class="sport-emoji"><svg width="26" height="26" viewBox="0 0 26 26" style="display:block;margin:0 auto">
+  <!-- Tennis ball — yellow-green with white curved seams -->
+  <circle cx="13" cy="13" r="11" fill="#CCDD00" stroke="#AABC00" stroke-width="0.5"/>
+  <!-- Curved seam lines — the characteristic tennis ball curves -->
+  <path d="M5,7 C8,10 8,16 5,19" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M21,7 C18,10 18,16 21,19" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- Highlight -->
+  <ellipse cx="9" cy="9" rx="3.5" ry="2.5" fill="rgba(255,255,255,0.18)" transform="rotate(-30,9,9)"/>
+</svg></span>Tennis</button>
+      </div>
+    </div>
+
+    <p class="section-label">Event Details</p>
+    <form id="raffleForm">
+      <div class="form-grid">
+        <div class="form-group"><label>Organization Name</label><input type="text" id="orgName" placeholder="Enter organization name"></div>
+        <div class="form-group"><label>Raffle Type</label>
+          <select id="raffleType" onchange="togglePrizeImage()">
+            <option value="5050">50/50 Raffle</option>
+            <option value="prize">Prize Raffle</option>
+          </select>
+        </div>
+        <div class="form-group full-width"><label>Upload Logo / Image</label><input type="file" id="logoUpload" accept="image/*"></div>
+        <div class="form-group full-width" id="prizeImageGroup" style="display:none"><label>Upload Prize Image <span class="hint">(for Prize Raffle)</span></label><input type="file" id="prizeImageUpload" accept="image/*"></div>
+      </div>
+      <div class="toggle-section">
+        <div class="toggle-header" onclick="toggleAdditional()">
+          <div class="toggle-switch" id="toggleSwitch"></div>
+          <span class="toggle-label">Include Detailed Information</span>
+        </div>
+        <div class="additional-fields" id="additionalFields">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>Ticket Packages</label>
+              <div id="packageContainer">
+                <div class="package-row">
+                  <input type="number" class="package-tickets" placeholder="# of tickets" min="1">
+                  <span class="for-label">for $</span>
+                  <input type="number" class="package-price" placeholder="0" min="0" step="1">
+                  <button type="button" class="remove-package" onclick="removePackage(this)" style="display:none">×</button>
+                </div>
+              </div>
+              <button type="button" class="btn-add" onclick="addPackage()">+ Add Package</button>
+            </div>
+            <div class="form-group"><label>Total Tickets Available</label><input type="text" id="totalTickets" placeholder="e.g., 1,000" oninput="formatCommaNumber(this)" inputmode="numeric"></div>
+            <div class="form-group"><label>Maximum Prize Amount</label><div class="input-prefix-wrap"><span class="input-prefix">$</span><input type="text" id="prizeAmount" placeholder="e.g., 625,000" oninput="formatCommaNumber(this)" inputmode="numeric"></div></div>
+            <div class="form-group" id="prizeDescriptionSection" style="display:none"><label>Prize Description <span class="hint">(include prize value)</span></label><input type="text" id="prizeDescription" placeholder="Describe the prize (include value)"></div>
+            <div class="form-group"><label>Licence Number</label><input type="text" id="licenceNumber" placeholder="e.g., #:Pending"></div>
+            <div class="form-group"><label>Draw Date</label><input type="date" id="drawDate"></div>
+            <div class="form-group"><label>Draw Time</label><input type="time" id="drawTime"></div>
+            <div class="form-group full-width"><label>Draw Location <span class="hint">(full address with postal code)</span></label><input type="text" id="drawLocation" placeholder="e.g., 2255 College Avenue, Regina, SK S4P 0S9"></div>
+          </div>
+        </div>
+      </div>
+      <div class="action-row"><button type="button" class="btn-generate" onclick="generatePoster()">✦ Generate Banner</button></div>
+    </form>
+  </div>
+
+  <div class="card preview-container">
+    <p class="preview-label">Banner Preview</p>
+    <canvas id="preview" width="1120" height="630"></canvas>
+    <br>
+    <a id="downloadLink" download="raffle-banner.png" style="display:none">⬇ Download Banner</a>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
+<script>
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let currentMode = 'standard';
+let currentSport = 'hockey';
+
+function setMode(m) {
+  currentMode = m;
+  document.getElementById('modeStandard').classList.toggle('active', m==='standard');
+  document.getElementById('modeSport').classList.toggle('active', m==='sport');
+  document.getElementById('sportSelectorSection').classList.toggle('visible', m==='sport');
+}
+function selectSport(btn) {
+  document.querySelectorAll('.sport-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  currentSport = btn.dataset.sport;
+}
+function addPackage() {
+  const c = document.getElementById('packageContainer');
+  const r = document.createElement('div');
+  r.className = 'package-row';
+  r.innerHTML = `<input type="number" class="package-tickets" placeholder="# of tickets" min="1"><span class="for-label">for $</span><input type="number" class="package-price" placeholder="0" min="0" step="1"><button type="button" class="remove-package" onclick="removePackage(this)">×</button>`;
+  c.appendChild(r);
+}
+function removePackage(btn) { btn.parentElement.remove(); }
+function togglePrizeImage() {
+  const t = document.getElementById('raffleType').value;
+  const pig = document.getElementById('prizeImageGroup');
+  const piu = document.getElementById('prizeImageUpload');
+  const pds = document.getElementById('prizeDescriptionSection');
+  const ts = document.getElementById('toggleSwitch');
+  if (t==='prize') {
+    pig.style.display='block';
+    if (ts.classList.contains('active')) { piu.disabled=true; pds.style.display='block'; }
+    else { piu.disabled=false; pds.style.display='none'; }
+  } else { pig.style.display='none'; pds.style.display='none'; piu.disabled=false; }
+}
+function formatCommaNumber(input) {
+  const raw = input.value.replace(/[^0-9]/g, '');
+  input.value = raw === '' ? '' : parseInt(raw, 10).toLocaleString('en-US');
+}
+function toggleAdditional() {
+  const ts = document.getElementById('toggleSwitch');
+  const af = document.getElementById('additionalFields');
+  const t = document.getElementById('raffleType').value;
+  const piu = document.getElementById('prizeImageUpload');
+  const pds = document.getElementById('prizeDescriptionSection');
+  ts.classList.toggle('active');
+  af.classList.toggle('visible');
+  if (t==='prize') {
+    if (ts.classList.contains('active')) { piu.disabled=true; pds.style.display='block'; }
+    else { piu.disabled=false; pds.style.display='none'; }
+  }
+}
+
+// ─── Canvas helpers ────────────────────────────────────────────────────────────
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  const words = text.split(' ');
+  let line='', yPos=y;
+  for (let n=0; n<words.length; n++) {
+    const testLine = line+words[n]+' ';
+    if (ctx.measureText(testLine).width > maxWidth && n>0) {
+      ctx.fillText(line,x,yPos); line=words[n]+' '; yPos+=lineHeight;
+    } else line=testLine;
+  }
+  ctx.fillText(line,x,yPos); return yPos;
+}
+
+function hasWhiteBackground(img) {
+  const o=document.createElement('canvas'); o.width=img.width; o.height=img.height;
+  const c=o.getContext('2d'); c.drawImage(img,0,0);
+  const pts=[[2,2],[img.width-3,2],[2,img.height-3],[img.width-3,img.height-3],[Math.floor(img.width/2),2]];
+  let wc=0;
+  for (const [sx,sy] of pts) { try { const p=c.getImageData(sx,sy,1,1).data; if(p[0]>230&&p[1]>230&&p[2]>230) wc++; } catch(e){} }
+  return wc>=3;
+}
+
+// Rounded rect helper
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r);
+  ctx.closePath();
+}
+
+// Scalloped rectangle: rounded corners on outside, scalloped on inner edge.
+// 50 scallops. Both tickets share the same scallop geometry so bumps/indents
+// sit at identical Y positions — outcrop on left lines up with indent on right.
+// side: 'left'  → scalloped on right edge (bumps protrude rightward)
+// side: 'right' → scalloped on left  edge (bumps indent leftward / same positions)
+function scalloppedRect(ctx, x, y, w, h, cornerR, side) {
+  const scallops = 50;
+  const sR = h / (scallops * 2);   // radius of each semicircle
+
+  ctx.beginPath();
+
+  if (side === 'left') {
+    // Start top-left, go clockwise
+    ctx.moveTo(x + cornerR, y);
+    // Top edge → top-right corner (right edge is the tear side — no round corner)
+    ctx.lineTo(x + w, y);
+    // RIGHT edge: alternating outward (protrude right) / inward (indent left) arcs
+    // i=0 → outward (anticlockwise arc centred ON the edge, bulging right)
+    for (let i = 0; i < scallops; i++) {
+      const cy = y + sR + i * sR * 2;
+      // i even → protrude right: clockwise (anticlockwise=false) sweeps through right side of circle
+      // i odd  → indent left:   ccw (anticlockwise=true) sweeps through left side
+      const outward = (i % 2 === 0);
+      ctx.arc(x + w, cy, sR, -Math.PI / 2, Math.PI / 2, !outward);
+    }
+    // Bottom-right to bottom-left
+    ctx.lineTo(x + w, y + h);
+    ctx.lineTo(x + cornerR, y + h);
+    ctx.arcTo(x, y + h, x, y + h - cornerR, cornerR);
+    ctx.lineTo(x, y + cornerR);
+    ctx.arcTo(x, y, x + cornerR, y, cornerR);
+
+  } else {
+    // RIGHT ticket: scalloped on LEFT edge.
+    // Same Y centres, but bumps indent into the ticket (concave from left).
+    // We trace the left edge top→bottom so the same i=0 position gets an inward arc.
+    ctx.moveTo(x, y);
+    for (let i = 0; i < scallops; i++) {
+      const cy = y + sR + i * sR * 2;
+      // Match left ticket: i even → left ticket protrudes right, so right ticket indents left
+      // indent left = centre on x, arc from top to bottom going anticlockwise (clockwise=false means ccw)
+      // i even: left ticket protrudes right → right ticket must indent left → anticlockwise=true
+      // i odd:  left ticket indents left   → right ticket protrudes right → anticlockwise=false
+      const inward = (i % 2 === 0);
+      ctx.arc(x, cy, sR, -Math.PI / 2, Math.PI / 2, inward);
+    }
+    ctx.lineTo(x, y + h);
+    ctx.lineTo(x + w - cornerR, y + h);
+    ctx.arcTo(x + w, y + h, x + w, y + h - cornerR, cornerR);
+    ctx.lineTo(x + w, y + cornerR);
+    ctx.arcTo(x + w, y, x + w - cornerR, y, cornerR);
+    ctx.lineTo(x, y);
+  }
+
+  ctx.closePath();
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BACKGROUND DRAWERS — brightened by ~50% vs v3
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function drawHockeyBg(ctx, W, H) {
+  // Bright ice
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#e8f4fd'); g.addColorStop(1,'#f6fbff');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#f8f8f8'; ctx.fillRect(0,0,W,22);
+  ctx.fillStyle='#dff0fa'; ctx.fillRect(0,22,W,8);
+  ctx.fillStyle='#ff4040'; ctx.fillRect(0,30,W,6);
+  ctx.fillStyle='#2196f3'; ctx.fillRect(0,36,W,3);
+  ctx.save(); ctx.globalAlpha=0.035; ctx.strokeStyle='#99bbdd'; ctx.lineWidth=1;
+  for(let i=0;i<H;i+=14){ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(W,i+5);ctx.stroke();}
+  ctx.restore();
+  ctx.strokeStyle='#ff4040'; ctx.lineWidth=4;
+  ctx.beginPath(); ctx.moveTo(W/2,0); ctx.lineTo(W/2,H); ctx.stroke();
+  ctx.strokeStyle='#2196f3'; ctx.lineWidth=6;
+  ctx.beginPath(); ctx.moveTo(W*0.27,0); ctx.lineTo(W*0.27,H); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W*0.73,0); ctx.lineTo(W*0.73,H); ctx.stroke();
+  ctx.strokeStyle='#2196f3'; ctx.lineWidth=4;
+  ctx.beginPath(); ctx.arc(W/2,H/2,90,0,Math.PI*2); ctx.stroke();
+  ctx.strokeStyle='#ff4040'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.arc(W/2,H/2,8,0,Math.PI*2); ctx.stroke();
+  function drawCrease(gx,gy){
+    ctx.strokeStyle='#ff4040'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(gx,gy,55,Math.PI*0.65,Math.PI*1.35,false); ctx.stroke();
+    ctx.strokeStyle='#ff4040'; ctx.lineWidth=2; ctx.strokeRect(gx-26,gy-18,52,20);
+  }
+  drawCrease(W*0.06,H/2); drawCrease(W*0.94,H/2);
+  ctx.fillStyle='#ff4040';
+  [[W*0.27,H*0.25],[W*0.27,H*0.75],[W*0.73,H*0.25],[W*0.73,H*0.75]].forEach(([fx,fy])=>{
+    ctx.beginPath(); ctx.arc(fx,fy,7,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#ff4040'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(fx,fy,40,0,Math.PI*2); ctx.stroke();
+  });
+  ctx.fillStyle='#2196f3'; ctx.fillRect(0,H-3,W,3);
+  ctx.fillStyle='#ff4040'; ctx.fillRect(0,H-9,W,6);
+  ctx.fillStyle='#dff0fa'; ctx.fillRect(0,H-17,W,8);
+  ctx.fillStyle='#f8f8f8'; ctx.fillRect(0,H-22,W,5);
+}
+
+// Hockey and Ringette share same ice background
+function drawRingetteBg(ctx, W, H) { drawHockeyBg(ctx, W, H); }
+
+function drawSoccerBg(ctx, W, H) {
+  const stripeW=W/12;
+  for(let i=0;i<12;i++){
+    ctx.fillStyle=i%2===0?'#4caf50':'#66bb6a';
+    ctx.fillRect(i*stripeW,0,stripeW,H);
+  }
+  ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.lineWidth=3;
+  ctx.strokeRect(W*0.05,H*0.08,W*0.9,H*0.84);
+  ctx.beginPath(); ctx.moveTo(W/2,H*0.08); ctx.lineTo(W/2,H*0.92); ctx.stroke();
+  ctx.beginPath(); ctx.arc(W/2,H/2,80,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle='white'; ctx.beginPath(); ctx.arc(W/2,H/2,5,0,Math.PI*2); ctx.fill();
+  ctx.strokeRect(W*0.05,H*0.3,W*0.18,H*0.4);
+  ctx.strokeRect(W*0.77,H*0.3,W*0.18,H*0.4);
+  ctx.strokeRect(W*0.05,H*0.39,W*0.08,H*0.22);
+  ctx.strokeRect(W*0.87,H*0.39,W*0.08,H*0.22);
+  ctx.fillStyle='rgba(255,255,255,0.3)';
+  ctx.fillRect(W*0.02,H*0.41,W*0.04,H*0.18);
+  ctx.fillRect(W*0.94,H*0.41,W*0.04,H*0.18);
+  [[W*0.05,H*0.08],[W*0.95,H*0.08],[W*0.05,H*0.92],[W*0.95,H*0.92]].forEach(([cx,cy])=>{
+    ctx.beginPath(); ctx.arc(cx,cy,18,0,Math.PI*2); ctx.stroke();
+  });
+}
+
+function drawFootballBg(ctx, W, H) {
+  for(let i=0;i<10;i++){
+    ctx.fillStyle=i%2===0?'#43a047':'#4caf50';
+    ctx.fillRect(i*(W/10),0,W/10,H);
+  }
+  ctx.strokeStyle='rgba(255,255,255,0.85)'; ctx.lineWidth=2.5;
+  ctx.strokeRect(W*0.04,H*0.06,W*0.92,H*0.88);
+  for(let x=0.14;x<0.96;x+=0.09){
+    ctx.beginPath(); ctx.moveTo(W*x,H*0.06); ctx.lineTo(W*x,H*0.94); ctx.stroke();
+  }
+  ctx.lineWidth=4; ctx.strokeStyle='rgba(255,255,255,0.95)';
+  ctx.beginPath(); ctx.moveTo(W/2,H*0.06); ctx.lineTo(W/2,H*0.94); ctx.stroke();
+  ctx.lineWidth=2; ctx.strokeStyle='rgba(255,255,255,0.65)';
+  for(let x=0.04;x<0.96;x+=0.045){
+    const px=W*x;
+    ctx.beginPath(); ctx.moveTo(px,H*0.38); ctx.lineTo(px,H*0.42); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px,H*0.58); ctx.lineTo(px,H*0.62); ctx.stroke();
+  }
+  ctx.fillStyle='rgba(21,101,192,0.3)'; ctx.fillRect(W*0.04,H*0.06,W*0.09,H*0.88);
+  ctx.fillStyle='rgba(192,21,21,0.3)'; ctx.fillRect(W*0.87,H*0.06,W*0.09,H*0.88);
+}
+
+function drawBaseballBg(ctx, W, H) {
+  ctx.fillStyle='#4a9a4a'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#a0724a';
+  ctx.beginPath(); ctx.arc(W/2,H+100,H*1.35,Math.PI,2*Math.PI); ctx.fill();
+  ctx.fillStyle='#d4a06a';
+  ctx.beginPath(); ctx.arc(W/2,H*0.85,H*0.68,Math.PI,2*Math.PI); ctx.fill();
+  ctx.fillStyle='#5aaa5a';
+  ctx.beginPath(); ctx.arc(W/2,H*0.85,H*0.52,Math.PI,2*Math.PI); ctx.fill();
+  ctx.save(); ctx.globalAlpha=0.15; ctx.strokeStyle='#006600'; ctx.lineWidth=18;
+  for(let i=0;i<8;i++){ctx.beginPath(); ctx.arc(W/2,H*0.85,(i+2)*55,Math.PI,2*Math.PI); ctx.stroke();}
+  ctx.restore();
+  const bx=W/2,by=H*0.85,bd=H*0.3;
+  const bases=[[bx,by-bd],[bx+bd,by],[bx,by],[bx-bd,by]];
+  ctx.strokeStyle='rgba(255,255,255,0.7)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(bases[0][0],bases[0][1]);
+  bases.forEach(([bx2,by2])=>ctx.lineTo(bx2,by2)); ctx.closePath(); ctx.stroke();
+  ctx.fillStyle='white';
+  bases.forEach(([bx2,by2])=>{ctx.beginPath();ctx.arc(bx2,by2,10,0,Math.PI*2);ctx.fill();});
+  ctx.fillStyle='#d4a06a'; ctx.beginPath(); ctx.arc(W/2,by-bd*0.45,20,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.6)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(W*0.05,H*0.05); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(W*0.95,H*0.05); ctx.stroke();
+}
+
+function drawSoftballBg(ctx, W, H) {
+  ctx.fillStyle='#5aaa5a'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#b07040';
+  ctx.beginPath(); ctx.arc(W/2,H+100,H*1.35,Math.PI,2*Math.PI); ctx.fill();
+  ctx.fillStyle='#d4a46a';
+  ctx.beginPath(); ctx.arc(W/2,H*0.85,H*0.65,Math.PI,2*Math.PI); ctx.fill();
+  ctx.fillStyle='#66aa66';
+  ctx.beginPath(); ctx.arc(W/2,H*0.85,H*0.5,Math.PI,2*Math.PI); ctx.fill();
+  const bx=W/2,by=H*0.85,bd=H*0.28;
+  const bases=[[bx,by-bd],[bx+bd,by],[bx,by],[bx-bd,by]];
+  ctx.strokeStyle='rgba(255,255,255,0.7)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(bases[0][0],bases[0][1]);
+  bases.forEach(([bx2,by2])=>ctx.lineTo(bx2,by2)); ctx.closePath(); ctx.stroke();
+  ctx.fillStyle='white';
+  bases.forEach(([bx2,by2])=>{ctx.beginPath();ctx.arc(bx2,by2,10,0,Math.PI*2);ctx.fill();});
+  ctx.strokeStyle='rgba(255,255,255,0.6)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(W*0.05,H*0.05); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(W*0.95,H*0.05); ctx.stroke();
+}
+
+function drawBasketballBg(ctx, W, H) {
+  for(let i=0;i<H/22;i++){
+    const shade=190+(i%3)*8;
+    ctx.fillStyle=`rgb(${shade+20},${Math.round(shade*0.82)},${Math.round(shade*0.55)})`;
+    ctx.fillRect(0,i*22,W,21);
+  }
+  ctx.save(); ctx.globalAlpha=0.06; ctx.strokeStyle='#000'; ctx.lineWidth=1;
+  for(let y=0;y<H;y+=22){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  ctx.restore();
+  ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.lineWidth=3;
+  ctx.strokeRect(W*0.04,H*0.07,W*0.92,H*0.86);
+  ctx.beginPath(); ctx.moveTo(W/2,H*0.07); ctx.lineTo(W/2,H*0.93); ctx.stroke();
+  ctx.beginPath(); ctx.arc(W/2,H/2,75,0,Math.PI*2); ctx.stroke();
+  ctx.strokeStyle='rgba(255,160,0,0.8)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(W/2,H/2,10,0,Math.PI*2); ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.arc(W*0.14,H/2,H*0.42,-Math.PI/2.2,Math.PI/2.2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(W*0.86,H/2,H*0.42,Math.PI-Math.PI/2.2,Math.PI+Math.PI/2.2); ctx.stroke();
+  ctx.strokeRect(W*0.04,H*0.33,W*0.2,H*0.34);
+  ctx.strokeRect(W*0.76,H*0.33,W*0.2,H*0.34);
+  ctx.beginPath(); ctx.arc(W*0.24,H/2,55,0,Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(W*0.76,H/2,55,0,Math.PI*2); ctx.stroke();
+  ctx.lineWidth=5; ctx.strokeStyle='rgba(255,255,255,0.8)';
+  ctx.beginPath(); ctx.moveTo(W*0.04,H*0.42); ctx.lineTo(W*0.04,H*0.58); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W*0.96,H*0.42); ctx.lineTo(W*0.96,H*0.58); ctx.stroke();
+}
+
+function drawWaterPoloBg(ctx, W, H) {
+  const wg=ctx.createLinearGradient(0,0,0,H);
+  wg.addColorStop(0,'#1565c0'); wg.addColorStop(1,'#1e88e5');
+  ctx.fillStyle=wg; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=2;
+  for(let y=H*0.15;y<H*0.9;y+=H*0.12){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  ctx.strokeStyle='rgba(255,255,255,0.85)'; ctx.lineWidth=3;
+  ctx.strokeRect(W*0.04,H*0.06,W*0.92,H*0.88);
+  ctx.beginPath(); ctx.moveTo(W/2,H*0.06); ctx.lineTo(W/2,H*0.94); ctx.stroke();
+  [[0.12,'#ef5350'],[0.2,'#ef5350'],[0.25,'#ffee58']].forEach(([t,c])=>{
+    ctx.strokeStyle=c+'cc'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(W*t,H*0.06); ctx.lineTo(W*t,H*0.94); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(W*(1-t),H*0.06); ctx.lineTo(W*(1-t),H*0.94); ctx.stroke();
+  });
+  ctx.fillStyle='rgba(255,255,255,0.2)';
+  ctx.fillRect(W*0.02,H*0.38,W*0.04,H*0.24); ctx.fillRect(W*0.94,H*0.38,W*0.04,H*0.24);
+  ctx.strokeStyle='rgba(255,255,255,0.75)'; ctx.lineWidth=3;
+  ctx.strokeRect(W*0.02,H*0.38,W*0.04,H*0.24); ctx.strokeRect(W*0.94,H*0.38,W*0.04,H*0.24);
+  ctx.save(); ctx.globalAlpha=0.08; ctx.strokeStyle='#90caf9'; ctx.lineWidth=1;
+  for(let y=30;y<H;y+=40){
+    ctx.beginPath();
+    for(let x=0;x<=W;x+=4){const wy=y+Math.sin((x/W)*Math.PI*8)*5; x===0?ctx.moveTo(x,wy):ctx.lineTo(x,wy);}
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawVolleyballBg(ctx, W, H) {
+  for(let i=0;i<H/22;i++){
+    const shade=195+(i%3)*7;
+    ctx.fillStyle=`rgb(${Math.min(255,shade+30)},${Math.round(shade*0.85)},${Math.round(shade*0.52)})`;
+    ctx.fillRect(0,i*22,W,21);
+  }
+  ctx.save(); ctx.globalAlpha=0.05; ctx.strokeStyle='#000'; ctx.lineWidth=1;
+  for(let y=0;y<H;y+=22){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  ctx.restore();
+  ctx.strokeStyle='rgba(255,255,255,0.95)'; ctx.lineWidth=3;
+  ctx.strokeRect(W*0.06,H*0.08,W*0.88,H*0.84);
+  ctx.beginPath(); ctx.moveTo(W/2,H*0.08); ctx.lineTo(W/2,H*0.92); ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,0.95)'; ctx.lineWidth=5;
+  ctx.beginPath(); ctx.moveTo(W/2-2,H*0.02); ctx.lineTo(W/2-2,H*0.98); ctx.stroke();
+  ctx.lineWidth=1; ctx.strokeStyle='rgba(255,255,255,0.35)';
+  for(let y=H*0.02;y<H*0.98;y+=12){ctx.beginPath();ctx.moveTo(W/2-8,y);ctx.lineTo(W/2+8,y);ctx.stroke();}
+  ctx.strokeStyle='rgba(255,220,0,0.8)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(W*0.33,H*0.08); ctx.lineTo(W*0.33,H*0.92); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W*0.67,H*0.08); ctx.lineTo(W*0.67,H*0.92); ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,0.5)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(W*0.06,H/2); ctx.lineTo(W*0.33,H/2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W*0.67,H/2); ctx.lineTo(W*0.94,H/2); ctx.stroke();
+}
+
+function drawCurlingBg(ctx, W, H) {
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#e8f0f5'); g.addColorStop(1,'#f5f9fc');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  ctx.save(); ctx.globalAlpha=0.04; ctx.strokeStyle='#78909c'; ctx.lineWidth=0.5;
+  for(let i=0;i<H;i+=10){ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(W,i);ctx.stroke();}
+  ctx.restore();
+  ctx.strokeStyle='#ef5350'; ctx.lineWidth=5;
+  ctx.beginPath(); ctx.moveTo(0,H*0.24); ctx.lineTo(W,H*0.24); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,H*0.76); ctx.lineTo(W,H*0.76); ctx.stroke();
+  ctx.strokeStyle='#1e88e5'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(0,H*0.18); ctx.lineTo(W,H*0.18); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,H*0.82); ctx.lineTo(W,H*0.82); ctx.stroke();
+  ctx.strokeStyle='#ef5350'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(W/2,0); ctx.lineTo(W/2,H); ctx.stroke();
+  // Houses — R/W/B, 20% bigger
+  function drawHouse(cx,cy){
+    const s=1.2;
+    ctx.fillStyle='#ef5350'; ctx.beginPath(); ctx.arc(cx,cy,66*s,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='white';   ctx.beginPath(); ctx.arc(cx,cy,48*s,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#1e88e5'; ctx.beginPath(); ctx.arc(cx,cy,30*s,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='white';   ctx.beginPath(); ctx.arc(cx,cy,12*s,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#ef5350'; ctx.beginPath(); ctx.arc(cx,cy,5*s,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#1e88e5'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(cx-72*s,cy); ctx.lineTo(cx+72*s,cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx,cy-72*s); ctx.lineTo(cx,cy+72*s); ctx.stroke();
+  }
+  drawHouse(W/2,H*0.18); drawHouse(W/2,H*0.82);
+  ctx.fillStyle='#90a4ae';
+  ctx.fillRect(W/2-15,H*0.06-4,30,8); ctx.fillRect(W/2-15,H*0.94-4,30,8);
+}
+
+function drawGymnasticsBg(ctx, W, H) {
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#3d1875'); g.addColorStop(1,'#5c2d9e');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='rgba(120,70,220,0.5)';
+  ctx.beginPath(); roundRect(ctx,W*0.06,H*0.1,W*0.88,H*0.8,8); ctx.fill();
+  ctx.strokeStyle='rgba(220,80,255,0.9)'; ctx.lineWidth=4;
+  ctx.beginPath(); roundRect(ctx,W*0.06,H*0.1,W*0.88,H*0.8,8); ctx.stroke();
+  ctx.strokeStyle='rgba(240,200,255,0.5)'; ctx.lineWidth=2;
+  ctx.beginPath(); roundRect(ctx,W*0.09,H*0.14,W*0.82,H*0.72,6); ctx.stroke();
+  ctx.save(); ctx.globalAlpha=0.1; ctx.strokeStyle='#e040fb'; ctx.lineWidth=1;
+  for(let x=W*0.06;x<W*0.94;x+=40){ctx.beginPath();ctx.moveTo(x,H*0.1);ctx.lineTo(x,H*0.9);ctx.stroke();}
+  for(let y=H*0.1;y<H*0.9;y+=40){ctx.beginPath();ctx.moveTo(W*0.06,y);ctx.lineTo(W*0.94,y);ctx.stroke();}
+  ctx.restore();
+  ctx.fillStyle='#f8f0ff';
+  for(let i=0;i<25;i++){
+    const sx=(i*137+23)%W, sy=(i*113+47)%H;
+    ctx.globalAlpha=0.08+(i%5)*0.04;
+    drawStar(ctx,sx,sy,4,5,2);
+  }
+  ctx.globalAlpha=1;
+  ctx.save(); ctx.globalAlpha=0.2; ctx.fillStyle='#e040fb';
+  for(let i=0;i<4;i++){
+    const cx=[W*0.15,W*0.85,W*0.15,W*0.85][i], cy=[H*0.25,H*0.25,H*0.75,H*0.75][i];
+    ctx.beginPath(); roundRect(ctx,cx-20,cy-12,40,24,6); ctx.fill();
+  }
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TICKET FILL FUNCTIONS
+// Each sport's shape is large, central, and represents the ball/equipment.
+// All textures are drawn AFTER ctx.clip() is already set by caller.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Helper: draw a sport shape path (no fill/stroke — caller does that)
+// Returns { cx, cy, shapeR } describing the shape centre and radius for content layout
+function sportShapePath(ctx, x, y, w, h, sport) {
+  const cx=x+w/2, cy=y+h/2;
+  const R=Math.min(w,h)*0.40;
+  switch(sport){
+    case 'soccer': {
+      const PR=R*1.05;
+      ctx.beginPath();
+      for(let i=0;i<5;i++){const a=(i*2*Math.PI/5)-Math.PI/2; i===0?ctx.moveTo(cx+Math.cos(a)*PR,cy+Math.sin(a)*PR):ctx.lineTo(cx+Math.cos(a)*PR,cy+Math.sin(a)*PR);}
+      ctx.closePath();
+      return {cx,cy,R:PR*0.85};
+    }
+    case 'football': {
+      ctx.beginPath();
+      ctx.ellipse(cx,cy,R*1.35,R*0.78,0,0,Math.PI*2);
+      ctx.closePath();
+      return {cx,cy,R:R*0.78};
+    }
+    default: {
+      ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.closePath();
+      return {cx,cy,R};
+    }
+  }
+}
+
+// Draw the sport shape (backdrop behind logo / content)
+// accentColor: [r,g,b] from uploaded image
+function drawSportBackdrop(ctx, x, y, w, h, sportKey, accentColor, darkestColor) {
+  const [r,g,b]=accentColor;
+  const shapeInfo=sportShapePath(ctx,x,y,w,h,sportKey);
+  // Solid white fill — keeps logo white background invisible (same as standard banner)
+  ctx.fillStyle='#ffffff'; ctx.fill();
+  // Stroke: soccer gets darkest logo colour (bold), others get thin accent ring
+  if(sportKey==='soccer' && darkestColor){
+    const [dr,dg,db]=darkestColor;
+    ctx.strokeStyle=`rgb(${dr},${dg},${db})`; ctx.lineWidth=3; ctx.stroke();
+  } else {
+    ctx.strokeStyle=`rgba(${r},${g},${b},0.55)`; ctx.lineWidth=1.5; ctx.stroke();
+  }
+  return shapeInfo;
+}
+
+// Clip future drawing to the sport shape
+function clipToSportShape(ctx, x, y, w, h, sportKey) {
+  sportShapePath(ctx,x,y,w,h,sportKey);
+  ctx.clip();
+  return sportShapePath(ctx,x,y,w,h,sportKey);
+}
+
+// Get dominant color from an image element
+function getDominantColor(img) {
+  try {
+    const ct=new ColorThief(); const p=ct.getPalette(img,6);
+    // Pick most saturated non-too-dark color
+    let best=p[0], bestScore=-1;
+    for(const [r,g,b] of p){
+      const mx=Math.max(r,g,b), mn=Math.min(r,g,b);
+      const sat=mx===0?0:(mx-mn)/mx;
+      const bri=mx/255;
+      if(bri<0.08) continue;
+      const score=sat*(0.4+bri*0.6);
+      if(score>bestScore){bestScore=score;best=[r,g,b];}
+    }
+    return best;
+  } catch(e){ return [80,80,80]; }
+}
+
+// ── Background removal ────────────────────────────────────────────────────────
+// Removes the outer background using BFS flood-fill from image edges only.
+// Does NOT touch interior pixels — avoids destroying logo colours that happen
+// to be similar to the background.
+function removeImageBackground(img) {
+  const oc=document.createElement('canvas');
+  oc.width=img.width; oc.height=img.height;
+  const oc2=oc.getContext('2d');
+  oc2.drawImage(img,0,0);
+  const id=oc2.getImageData(0,0,oc.width,oc.height);
+  const d=id.data, W=oc.width, H=oc.height;
+
+  // Sample border pixels to detect background colour
+  const samplePts=[
+    [0,0],[W-1,0],[0,H-1],[W-1,H-1],
+    [Math.floor(W/2),0],[0,Math.floor(H/2)],
+    [W-1,Math.floor(H/2)],[Math.floor(W/2),H-1],
+    [2,2],[W-3,2],[2,H-3],[W-3,H-3]
+  ];
+  function getPixel(x,y){const i=(y*W+x)*4;return[d[i],d[i+1],d[i+2],d[i+3]];}
+  const bgSamples=samplePts.map(([x,y])=>getPixel(x,y)).filter(p=>p[3]>200);
+
+  if(bgSamples.length===0) return oc; // already transparent
+
+  // Average background colour
+  const bgR=bgSamples.reduce((s,p)=>s+p[0],0)/bgSamples.length;
+  const bgG=bgSamples.reduce((s,p)=>s+p[1],0)/bgSamples.length;
+  const bgB=bgSamples.reduce((s,p)=>s+p[2],0)/bgSamples.length;
+
+  // Tight tolerance — only remove pixels very close to the bg colour
+  // Lower value = less aggressive = safer for logos with colours near background
+  const tolerance=28;
+
+  // BFS flood-fill strictly from border pixels outward — never touches interior
+  const visited=new Uint8Array(W*H);
+  const queue=[];
+  function enqueue(x,y){
+    if(x<0||x>=W||y<0||y>=H) return;
+    const idx=y*W+x;
+    if(visited[idx]) return;
+    const pi=idx*4;
+    if(d[pi+3]<10){ visited[idx]=1; return; } // already transparent — propagate but don't mark
+    const dr=d[pi]-bgR, dg=d[pi+1]-bgG, db=d[pi+2]-bgB;
+    const dist=Math.sqrt(dr*dr+dg*dg+db*db);
+    if(dist<tolerance){
+      visited[idx]=1;
+      queue.push(x,y);
+    }
+  }
+  // Seed only from the outermost border row/column
+  for(let x=0;x<W;x++){enqueue(x,0);enqueue(x,H-1);}
+  for(let y=1;y<H-1;y++){enqueue(0,y);enqueue(W-1,y);}
+
+  let qi=0;
+  while(qi<queue.length){
+    const x=queue[qi++], y=queue[qi++];
+    const pi=(y*W+x)*4;
+    const dr=d[pi]-bgR, dg=d[pi+1]-bgG, db=d[pi+2]-bgB;
+    const dist=Math.sqrt(dr*dr+dg*dg+db*db);
+    // Feather: pixels right at tolerance edge get partial alpha
+    const alpha=Math.min(255, Math.round((dist/tolerance)*255*2.0));
+    d[pi+3]=Math.min(d[pi+3], alpha);
+    [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>enqueue(x+dx,y+dy));
+  }
+
+  // NO global second pass — do not touch non-connected interior pixels
+  oc2.putImageData(id,0,0);
+  return oc;
+}
+
+// ── HOCKEY PUCK ──────────────────────────────────────────────────────────────
+function fillPuck(ctx, x, y, w, h) {
+  const g=ctx.createLinearGradient(x,y,x+w,y+h);
+  g.addColorStop(0,'#2a2a2a'); g.addColorStop(0.5,'#111'); g.addColorStop(1,'#222');
+  ctx.fillStyle=g; ctx.fillRect(x,y,w,h);
+  // Tread lines
+  ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=1;
+  for(let i=0;i<14;i++){
+    const ly2=y+h*0.08+i*(h*0.84/14);
+    ctx.beginPath(); ctx.moveTo(x,ly2); ctx.lineTo(x+w,ly2); ctx.stroke();
+  }
+  // Edge ring
+  ctx.strokeStyle='rgba(80,80,80,0.6)'; ctx.lineWidth=10;
+  ctx.beginPath(); ctx.arc(x+w*0.5,y+h*0.5,Math.min(w,h)*0.43,0,Math.PI*2); ctx.stroke();
+  // Sheen
+  const sheen=ctx.createRadialGradient(x+w*0.35,y+h*0.25,5,x+w*0.35,y+h*0.25,w*0.55);
+  sheen.addColorStop(0,'rgba(255,255,255,0.13)'); sheen.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=sheen; ctx.fillRect(x,y,w,h);
+}
+const fillPuckLeft=fillPuck, fillPuckRight=fillPuck;
+
+// ── SOCCER BALL — classic black-and-white pentagon patches ───────────────────
+// Shared helper: draw B&W soccer ball centred at (cx,cy) with given radius r
+function drawSoccerBallBW(ctx, cx, cy, r) {
+  const pR = r * 0.295; // circumscribed pentagon patch radius
+  // stroke width scales with ball size
+  const sw = Math.max(0.7, r * 0.028);
+  function pentagon(px, py, pr2, filled) {
+    ctx.beginPath();
+    for(let i=0;i<5;i++){
+      const a=(i*2*Math.PI/5)-Math.PI/2;
+      if(i===0) ctx.moveTo(px+Math.cos(a)*pr2, py+Math.sin(a)*pr2);
+      else       ctx.lineTo(px+Math.cos(a)*pr2, py+Math.sin(a)*pr2);
+    }
+    ctx.closePath();
+    if(filled){ ctx.fillStyle='#1a1a1a'; ctx.fill(); }
+    ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=sw; ctx.stroke();
+  }
+  pentagon(cx, cy, pR, true); // centre patch
+  const d = r * 0.595;        // distance from ball centre to surrounding patch centres
+  for(let j=0;j<5;j++){
+    const a=(j*2*Math.PI/5)-Math.PI/2;
+    pentagon(cx+Math.cos(a)*d, cy+Math.sin(a)*d, pR, true);
+  }
+}
+function fillSoccerBall(ctx, x, y, w, h) {
+  ctx.fillStyle='#f5f5f5'; ctx.fillRect(x,y,w,h);
+  drawSoccerBallBW(ctx, x+w/2, y+h/2, Math.min(w,h)*0.38);
+  const sheen=ctx.createRadialGradient(x+w*0.32,y+h*0.26,4,x+w/2,y+h/2,Math.min(w,h)*0.42);
+  sheen.addColorStop(0,'rgba(255,255,255,0.45)'); sheen.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=sheen; ctx.fillRect(x,y,w,h);
+}
+const fillSoccerBallLeft=fillSoccerBall, fillSoccerBallRight=fillSoccerBall;
+
+// ── FOOTBALL ─────────────────────────────────────────────────────────────────
+function fillFootball(ctx, x, y, w, h) {
+  const g=ctx.createLinearGradient(x,y,x+w,y+h);
+  g.addColorStop(0,'#8b4513'); g.addColorStop(0.4,'#a0522d'); g.addColorStop(0.7,'#8b4513'); g.addColorStop(1,'#7a3c1a');
+  ctx.fillStyle=g; ctx.fillRect(x,y,w,h);
+  // Leather pebble texture — subtle
+  ctx.globalAlpha=0.06; ctx.strokeStyle='#3a1500'; ctx.lineWidth=0.5;
+  for(let i=0;i<18;i++) for(let j=0;j<12;j++){ctx.beginPath();ctx.arc(x+i*(w/18)+5,y+j*(h/12)+5,3,0,Math.PI*2);ctx.stroke();}
+  ctx.globalAlpha=1;
+  // No laces — they span the full ticket height and obscure the header text
+  const sheen=ctx.createRadialGradient(x+w*0.3,y+h*0.25,5,x+w*0.3,y+h*0.25,w*0.55);
+  sheen.addColorStop(0,'rgba(255,200,150,0.22)'); sheen.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=sheen; ctx.fillRect(x,y,w,h);
+}
+const fillFootballLeft=fillFootball, fillFootballRight=fillFootball;
+
+// ── BASEBALL ─────────────────────────────────────────────────────────────────
+// Red stitching runs down the OUTER edges of the ticket shape (near the scallops)
+function fillBaseball(ctx, x, y, w, h) {
+  ctx.fillStyle='#f9f6f1'; ctx.fillRect(x,y,w,h);
+  // Curved stitching along left and right edges of the ticket
+  ctx.strokeStyle='#cc1111'; ctx.lineWidth=2.5;
+  for(let i=0;i<14;i++){
+    const t=i/13;
+    const sy=y+h*(0.05+t*0.9);
+    // Left edge stitches
+    ctx.beginPath(); ctx.moveTo(x+8,sy); ctx.lineTo(x+16,sy+7); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x+8,sy+7); ctx.lineTo(x+16,sy); ctx.stroke();
+    // Right edge stitches
+    ctx.beginPath(); ctx.moveTo(x+w-8,sy); ctx.lineTo(x+w-16,sy+7); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x+w-8,sy+7); ctx.lineTo(x+w-16,sy); ctx.stroke();
+  }
+  const sheen=ctx.createRadialGradient(x+w*0.35,y+h*0.28,5,x+w*0.35,y+h*0.28,w*0.5);
+  sheen.addColorStop(0,'rgba(255,255,255,0.55)'); sheen.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=sheen; ctx.fillRect(x,y,w,h);
+}
+const fillBaseballLeft=fillBaseball, fillBaseballRight=fillBaseball;
+
+// ── SOFTBALL ─────────────────────────────────────────────────────────────────
+function fillSoftball(ctx, x, y, w, h) {
+  ctx.fillStyle='#fffce8'; ctx.fillRect(x,y,w,h);
+  ctx.strokeStyle='#e91e63'; ctx.lineWidth=2.5;
+  for(let i=0;i<14;i++){
+    const t=i/13;
+    const sy=y+h*(0.05+t*0.9);
+    ctx.beginPath(); ctx.moveTo(x+8,sy); ctx.lineTo(x+16,sy+7); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x+8,sy+7); ctx.lineTo(x+16,sy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x+w-8,sy); ctx.lineTo(x+w-16,sy+7); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x+w-8,sy+7); ctx.lineTo(x+w-16,sy); ctx.stroke();
+  }
+  const sheen=ctx.createRadialGradient(x+w*0.35,y+h*0.28,5,x+w*0.35,y+h*0.28,w*0.5);
+  sheen.addColorStop(0,'rgba(255,255,255,0.55)'); sheen.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=sheen; ctx.fillRect(x,y,w,h);
+}
+const fillSoftballLeft=fillSoftball, fillSoftballRight=fillSoftball;
+
+// ── BASKETBALL ───────────────────────────────────────────────────────────────
+function fillBasketball(ctx, x, y, w, h) {
+  const g=ctx.createLinearGradient(x,y,x+w,y+h);
+  g.addColorStop(0,'#e65100'); g.addColorStop(0.5,'#f57c00'); g.addColorStop(1,'#e65100');
+  ctx.fillStyle=g; ctx.fillRect(x,y,w,h);
+  ctx.strokeStyle='rgba(0,0,0,0.6)'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.arc(x+w*0.5,y+h*0.5,Math.min(w,h)*0.42,0,Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x+w*0.5,y+h*0.05); ctx.lineTo(x+w*0.5,y+h*0.95); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x-w*0.35,y+h*0.5,w*0.7,-0.5,0.5); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x+w*1.35,y+h*0.5,w*0.7,Math.PI-0.5,Math.PI+0.5); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x+w*0.05,y+h*0.5); ctx.lineTo(x+w*0.95,y+h*0.5); ctx.stroke();
+  const sheen=ctx.createRadialGradient(x+w*0.3,y+h*0.25,5,x+w*0.3,y+h*0.25,w*0.55);
+  sheen.addColorStop(0,'rgba(255,220,180,0.3)'); sheen.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=sheen; ctx.fillRect(x,y,w,h);
+}
+const fillBasketballLeft=fillBasketball, fillBasketballRight=fillBasketball;
+
+// ── WATER POLO BALL ── (hex patches removed)
+function fillWaterPolo(ctx, x, y, w, h) {
+  ctx.fillStyle='#e8f4fd'; ctx.fillRect(x,y,w,h);
+  // Outer ring only
+  ctx.strokeStyle='rgba(21,101,192,0.55)'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.arc(x+w*0.5,y+h*0.5,Math.min(w,h)*0.42,0,Math.PI*2); ctx.stroke();
+  const sheen=ctx.createRadialGradient(x+w*0.32,y+h*0.27,3,x+w*0.32,y+h*0.27,w*0.5);
+  sheen.addColorStop(0,'rgba(255,255,255,0.55)'); sheen.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=sheen; ctx.fillRect(x,y,w,h);
+}
+const fillWaterPoloLeft=fillWaterPolo, fillWaterPoloRight=fillWaterPolo;
+
+// ── VOLLEYBALL ── (colored panels removed — clean white)
+function fillVolleyball(ctx, x, y, w, h) {
+  ctx.fillStyle='#fff8e1'; ctx.fillRect(x,y,w,h);
+  ctx.strokeStyle='rgba(0,0,0,0.15)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(x+w*0.5,y+h*0.5,Math.min(w,h)*0.42,0,Math.PI*2); ctx.stroke();
+  const sheen=ctx.createRadialGradient(x+w*0.35,y+h*0.25,5,x+w*0.35,y+h*0.25,w*0.5);
+  sheen.addColorStop(0,'rgba(255,255,255,0.55)'); sheen.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=sheen; ctx.fillRect(x,y,w,h);
+}
+const fillVolleyballLeft=fillVolleyball, fillVolleyballRight=fillVolleyball;
+
+// ── RINGETTE RING ── (blue rubber ring, no diamond emoji)
+function fillRingette(ctx, x, y, w, h) {
+  // Hockey-ice look: light blue-white
+  const g=ctx.createLinearGradient(x,y,x+w,y+h);
+  g.addColorStop(0,'#e8f4fd'); g.addColorStop(1,'#f6fbff');
+  ctx.fillStyle=g; ctx.fillRect(x,y,w,h);
+  // Tread lines like ice
+  ctx.save(); ctx.globalAlpha=0.04; ctx.strokeStyle='#99bbdd'; ctx.lineWidth=1;
+  for(let i=0;i<12;i++){const ly2=y+h*0.05+i*(h*0.9/12);ctx.beginPath();ctx.moveTo(x,ly2);ctx.lineTo(x+w,ly2+4);ctx.stroke();}
+  ctx.restore();
+  // Blue ringette ring — donut
+  const cx=x+w*0.5, cy=y+h*0.5;
+  const oR=Math.min(w,h)*0.38, iR=Math.min(w,h)*0.21;
+  // Outer ring body
+  ctx.fillStyle='#3a78c9';
+  ctx.beginPath(); ctx.arc(cx,cy,oR,0,Math.PI*2); ctx.fill();
+  // Hole
+  ctx.fillStyle=g;
+  ctx.beginPath(); ctx.arc(cx,cy,iR,0,Math.PI*2); ctx.fill();
+  // Ring tread lines
+  ctx.save(); ctx.globalAlpha=0.25; ctx.strokeStyle='#1a3a6a'; ctx.lineWidth=1.5;
+  for(let i=0;i<6;i++){
+    const a=i*Math.PI/3;
+    const ra=(oR+iR)/2;
+    ctx.beginPath(); ctx.arc(cx,cy,ra,a,a+Math.PI/3.5); ctx.stroke();
+  }
+  ctx.restore();
+  // Gloss
+  ctx.strokeStyle='rgba(255,255,255,0.35)'; ctx.lineWidth=4;
+  ctx.beginPath(); ctx.arc(cx,cy,oR,Math.PI*1.15,Math.PI*1.75); ctx.stroke();
+  const sheen=ctx.createRadialGradient(cx-oR*0.3,cy-oR*0.3,2,cx,cy,oR);
+  sheen.addColorStop(0,'rgba(255,255,255,0.22)'); sheen.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=sheen; ctx.fillRect(x,y,w,h);
+}
+const fillRingetteLeft=fillRingette, fillRingetteRight=fillRingette;
+
+// ── CURLING ROCK ── (red handle removed, R/W/B concentric rings, 20% bigger)
+function fillCurling(ctx, x, y, w, h) {
+  const g=ctx.createRadialGradient(x+w*0.4,y+h*0.35,5,x+w*0.5,y+h*0.5,Math.min(w,h)*0.5);
+  g.addColorStop(0,'#546e7a'); g.addColorStop(0.5,'#37474f'); g.addColorStop(1,'#263238');
+  ctx.fillStyle=g; ctx.fillRect(x,y,w,h);
+  // Granite speckle
+  ctx.globalAlpha=0.2;
+  for(let i=0;i<120;i++){
+    const sx=x+((i*137+31)%Math.round(w)), sy=y+((i*113+47)%Math.round(h)), sr=((i%5)+0.5)*0.7;
+    ctx.fillStyle=i%2===0?'#90a4ae':'#b0bec5';
+    ctx.beginPath(); ctx.arc(sx,sy,sr,0,Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  // R/W/B concentric rings, 20% bigger
+  const cx=x+w*0.5, cy=y+h*0.5, s=1.2;
+  ctx.fillStyle='#ef5350'; ctx.beginPath(); ctx.arc(cx,cy,Math.min(w,h)*0.26*s,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='white';   ctx.beginPath(); ctx.arc(cx,cy,Math.min(w,h)*0.19*s,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#1e88e5'; ctx.beginPath(); ctx.arc(cx,cy,Math.min(w,h)*0.12*s,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='white';   ctx.beginPath(); ctx.arc(cx,cy,Math.min(w,h)*0.06*s,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#ef5350'; ctx.beginPath(); ctx.arc(cx,cy,Math.min(w,h)*0.025*s,0,Math.PI*2); ctx.fill();
+  // Sheen
+  const sheen=ctx.createRadialGradient(cx-20,cy-20,3,cx,cy,Math.min(w,h)*0.45);
+  sheen.addColorStop(0,'rgba(255,255,255,0.2)'); sheen.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=sheen; ctx.fillRect(x,y,w,h);
+}
+const fillCurlingLeft=fillCurling, fillCurlingRight=fillCurling;
+
+// ── GYMNASTICS ───────────────────────────────────────────────────────────────
+function fillGymnastics(ctx, x, y, w, h) {
+  const g=ctx.createLinearGradient(x,y,x,y+h);
+  g.addColorStop(0,'#7b1fa2'); g.addColorStop(0.5,'#6a1b9a'); g.addColorStop(1,'#4a148c');
+  ctx.fillStyle=g; ctx.fillRect(x,y,w,h);
+  ctx.globalAlpha=0.1; ctx.strokeStyle='#e040fb'; ctx.lineWidth=1;
+  for(let gx2=x;gx2<x+w;gx2+=22){ctx.beginPath();ctx.moveTo(gx2,y);ctx.lineTo(gx2,y+h);ctx.stroke();}
+  for(let gy2=y;gy2<y+h;gy2+=22){ctx.beginPath();ctx.moveTo(x,gy2);ctx.lineTo(x+w,gy2);ctx.stroke();}
+  ctx.globalAlpha=1;
+  ctx.fillStyle='rgba(248,240,255,0.3)';
+  for(let i=0;i<8;i++){const sx2=x+w*((i*0.13+0.07)%1),sy2=y+h*((i*0.17+0.1)%1);drawStar(ctx,sx2,sy2,4,6,2.5);}
+  ctx.strokeStyle='rgba(224,64,251,0.6)'; ctx.lineWidth=3;
+  ctx.strokeRect(x+6,y+6,w-12,h-12);
+}
+const fillGymnasticsLeft=fillGymnastics, fillGymnasticsRight=fillGymnastics;
+
+// Helpers
+function drawPentagon(ctx,cx,cy,r){
+  ctx.beginPath();
+  for(let i=0;i<5;i++){const a=(i*2*Math.PI/5)-Math.PI/2;ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);}
+  ctx.closePath(); ctx.fill();
+}
+function drawHexPatch(ctx,cx,cy,r){
+  ctx.beginPath();
+  for(let i=0;i<6;i++){const a=i*Math.PI/3;ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);}
+  ctx.closePath(); ctx.fill();
+}
+function drawStar(ctx,cx,cy,pts,outerR,innerR){
+  ctx.beginPath();
+  for(let i=0;i<pts*2;i++){const a=(i*Math.PI)/pts-Math.PI/2,r=i%2===0?outerR:innerR;ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);}
+  ctx.closePath(); ctx.fill();
+}
+
+// ── GOLF ─────────────────────────────────────────────────────────────────────
+function drawGolfBg(ctx, W, H) {
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#2e7d32'); g.addColorStop(0.55,'#388e3c'); g.addColorStop(1,'#1b5e20');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  ctx.save(); ctx.globalAlpha=0.07;
+  for(let i=0;i<14;i++){ctx.fillStyle=i%2===0?'#000':'#fff';ctx.fillRect(i*(W/14),0,W/14,H);}
+  ctx.restore();
+  ctx.save(); ctx.globalAlpha=0.28; ctx.fillStyle='#43a047';
+  ctx.beginPath(); ctx.ellipse(W/2,H*0.72,W*0.38,H*0.18,0,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+  ctx.strokeStyle='rgba(255,255,255,0.90)'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(W*0.5,H*0.22); ctx.lineTo(W*0.5,H*0.72); ctx.stroke();
+  ctx.fillStyle='#f44336';
+  ctx.beginPath(); ctx.moveTo(W*0.5,H*0.22); ctx.lineTo(W*0.5+W*0.038,H*0.265); ctx.lineTo(W*0.5,H*0.31); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#1b5e20';
+  ctx.beginPath(); ctx.ellipse(W*0.5,H*0.725,W*0.025,W*0.009,0,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,0.35)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.ellipse(W*0.5,H*0.725,W*0.025,W*0.009,0,0,Math.PI*2); ctx.stroke();
+  ctx.save(); ctx.globalAlpha=0.18; ctx.fillStyle='#f5f0dc';
+  ctx.beginPath(); ctx.ellipse(W*0.78,H*0.65,W*0.14,H*0.08,0.3,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+function fillGolf(ctx, x, y, w, h) {
+  ctx.fillStyle='#f9f6ee'; ctx.fillRect(x,y,w,h);
+  ctx.save(); ctx.globalAlpha=0.05; ctx.strokeStyle='#388e3c'; ctx.lineWidth=1;
+  for(let i=0;i<12;i++){ctx.beginPath();ctx.moveTo(x+i*(w/12),y);ctx.lineTo(x+i*(w/12),y+h);ctx.stroke();}
+  ctx.restore();
+  const bx=x+w*0.72, by=y+h*0.65, br=Math.min(w,h)*0.1;
+  const bg2=ctx.createRadialGradient(bx-br*0.3,by-br*0.3,br*0.1,bx,by,br);
+  bg2.addColorStop(0,'#fff'); bg2.addColorStop(1,'#ddd');
+  ctx.fillStyle=bg2; ctx.beginPath(); ctx.arc(bx,by,br,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#bbb'; ctx.lineWidth=0.5;
+  ctx.beginPath(); ctx.arc(bx,by,br,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle='rgba(0,0,0,0.08)';
+  [[-0.35,-0.35],[0,-0.45],[0.35,-0.25],[0.45,0.1],[0.2,0.38],[-0.2,0.4],[-0.44,0.1],[-0.3,0.22]].forEach(([dx,dy])=>{ctx.beginPath();ctx.arc(bx+dx*br,by+dy*br,br*0.12,0,Math.PI*2);ctx.fill();});
+}
+const fillGolfLeft=fillGolf, fillGolfRight=fillGolf;
+
+// ── FIGURE SKATING ────────────────────────────────────────────────────────────
+function drawFigureSkatingBg(ctx, W, H) {
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#e3f2fd'); g.addColorStop(0.5,'#bbdefb'); g.addColorStop(1,'#90caf9');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  ctx.save(); ctx.globalAlpha=0.18; ctx.strokeStyle='#ffffff'; ctx.lineWidth=1.5;
+  for(let y=H*0.3;y<H;y+=22){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y+8);ctx.stroke();}
+  ctx.restore();
+  ctx.strokeStyle='rgba(25,118,210,0.55)'; ctx.lineWidth=3;
+  ctx.beginPath(); roundRect(ctx,W*0.04,H*0.06,W*0.92,H*0.88,18); ctx.stroke();
+  // Skate trace figure-8 loops (dashed via short segments)
+  ctx.save(); ctx.globalAlpha=0.22; ctx.strokeStyle='#1565c0'; ctx.lineWidth=1.5;
+  function dashedEllipse(cx,cy,rx2,ry2,segments){
+    for(let i=0;i<segments;i+=2){
+      const a1=i*(2*Math.PI/segments), a2=(i+1)*(2*Math.PI/segments);
+      const steps=8;
+      ctx.beginPath();
+      for(let s=0;s<=steps;s++){const a=a1+(a2-a1)*(s/steps);if(s===0)ctx.moveTo(cx+Math.cos(a)*rx2,cy+Math.sin(a)*ry2);else ctx.lineTo(cx+Math.cos(a)*rx2,cy+Math.sin(a)*ry2);}
+      ctx.stroke();
+    }
+  }
+  dashedEllipse(W*0.35,H*0.48,W*0.22,H*0.2,16);
+  dashedEllipse(W*0.65,H*0.52,W*0.22,H*0.2,16);
+  ctx.restore();
+  ctx.strokeStyle='rgba(211,47,47,0.6)'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(W*0.04,H/2); ctx.lineTo(W*0.96,H/2); ctx.stroke();
+  ctx.strokeStyle='rgba(21,101,192,0.5)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(W*0.04,H*0.33); ctx.lineTo(W*0.96,H*0.33); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W*0.04,H*0.67); ctx.lineTo(W*0.96,H*0.67); ctx.stroke();
+}
+function fillFigureSkating(ctx, x, y, w, h) {
+  const g=ctx.createLinearGradient(x,y,x,y+h);
+  g.addColorStop(0,'#e8f4fd'); g.addColorStop(1,'#c5dff5');
+  ctx.fillStyle=g; ctx.fillRect(x,y,w,h);
+  ctx.save(); ctx.globalAlpha=0.12; ctx.strokeStyle='#90caf9'; ctx.lineWidth=0.8;
+  for(let i=0;i<8;i++){
+    const sy=y+h*(0.1+i*0.1);
+    ctx.beginPath(); ctx.moveTo(x+w*0.05,sy); ctx.bezierCurveTo(x+w*0.3,sy-6,x+w*0.7,sy+6,x+w*0.95,sy); ctx.stroke();
+  }
+  ctx.restore();
+  // Skate boot (no ctx.roundRect — use roundRect polyfill path instead)
+  const bx=x+w*0.5, by=y+h*0.62;
+  ctx.fillStyle='#37474f';
+  ctx.beginPath(); roundRect(ctx,bx-w*0.15,by-h*0.12,w*0.3,h*0.12,4); ctx.fill();
+  ctx.strokeStyle='#b0bec5'; ctx.lineWidth=3; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(bx-w*0.18,by); ctx.lineTo(bx+w*0.22,by); ctx.stroke();
+  ctx.lineWidth=1.5; ctx.strokeStyle='#90a4ae';
+  for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(bx+w*0.18+i*3,by);ctx.lineTo(bx+w*0.19+i*3,by-5);ctx.stroke();}
+}
+const fillFigureSkatingLeft=fillFigureSkating, fillFigureSkatingRight=fillFigureSkating;
+
+// ── LACROSSE ──────────────────────────────────────────────────────────────────
+function drawLacrosseBg(ctx, W, H) {
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#1b5e20'); g.addColorStop(0.5,'#2e7d32'); g.addColorStop(1,'#1b5e20');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  ctx.save(); ctx.globalAlpha=0.08;
+  for(let i=0;i<12;i++){ctx.fillStyle=i%2?'#000':'#fff';ctx.fillRect(i*(W/12),0,W/12,H);}
+  ctx.restore();
+  ctx.strokeStyle='rgba(255,255,255,0.85)'; ctx.lineWidth=2.5;
+  ctx.strokeRect(W*0.04,H*0.06,W*0.92,H*0.88);
+  ctx.beginPath(); ctx.moveTo(W/2,H*0.06); ctx.lineTo(W/2,H*0.94); ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,0.75)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(W*0.15,H/2,H*0.18,0,Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(W*0.85,H/2,H*0.18,0,Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(W/2,H/2,H*0.12,0,Math.PI*2); ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.lineWidth=3;
+  ctx.strokeRect(W*0.04,H*0.42,W*0.05,H*0.16);
+  ctx.strokeRect(W*0.91,H*0.42,W*0.05,H*0.16);
+}
+function fillLacrosse(ctx, x, y, w, h) {
+  ctx.fillStyle='#fafafa'; ctx.fillRect(x,y,w,h);
+  ctx.save(); ctx.globalAlpha=0.04; ctx.strokeStyle='#2e7d32'; ctx.lineWidth=0.8;
+  for(let i=0;i<10;i++){ctx.beginPath();ctx.moveTo(x+i*(w/10),y);ctx.lineTo(x+i*(w/10),y+h);ctx.stroke();}
+  ctx.restore();
+  const hx=x+w*0.5, hy=y+h*0.5, hr=Math.min(w,h)*0.22;
+  ctx.strokeStyle='#5d4037'; ctx.lineWidth=3;
+  ctx.beginPath();
+  ctx.moveTo(hx, hy-hr*1.1);
+  ctx.bezierCurveTo(hx+hr*0.85,hy-hr*1.0, hx+hr*0.85,hy+hr*0.6, hx,hy+hr*0.8);
+  ctx.bezierCurveTo(hx-hr*0.85,hy+hr*0.6, hx-hr*0.85,hy-hr*1.0, hx,hy-hr*1.1);
+  ctx.stroke();
+  ctx.strokeStyle='rgba(120,90,60,0.45)'; ctx.lineWidth=1.2;
+  for(let i=1;i<5;i++){
+    const sy=hy-hr*0.9+i*(hr*1.7/5);
+    const spread=hr*0.7*(1-Math.abs(i-2.5)/3.5);
+    ctx.beginPath(); ctx.moveTo(hx-spread,sy); ctx.lineTo(hx+spread,sy); ctx.stroke();
+  }
+  for(let j=-1;j<=1;j++){
+    ctx.beginPath(); ctx.moveTo(hx+j*hr*0.35,hy-hr*0.9); ctx.lineTo(hx+j*hr*0.35,hy+hr*0.75); ctx.stroke();
+  }
+  ctx.strokeStyle='#5d4037'; ctx.lineWidth=5; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(hx,hy+hr*0.8); ctx.lineTo(hx,hy+hr*1.5); ctx.stroke();
+}
+const fillLacrosseLeft=fillLacrosse, fillLacrosseRight=fillLacrosse;
+
+// ── RUGBY ─────────────────────────────────────────────────────────────────────
+function drawRugbyBg(ctx, W, H) {
+  // Green pitch with stripes
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#1b5e20'); g.addColorStop(0.5,'#2e7d32'); g.addColorStop(1,'#1b5e20');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  ctx.save(); ctx.globalAlpha=0.07;
+  for(let i=0;i<12;i++){ctx.fillStyle=i%2?'#000':'#fff';ctx.fillRect(i*(W/12),0,W/12,H);}
+  ctx.restore();
+  // Field markings
+  ctx.strokeStyle='rgba(255,255,255,0.80)'; ctx.lineWidth=2.5;
+  ctx.strokeRect(W*0.04,H*0.06,W*0.92,H*0.88);
+  // Try lines (22m equivalents)
+  ctx.beginPath(); ctx.moveTo(W*0.2,H*0.06); ctx.lineTo(W*0.2,H*0.94); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W*0.8,H*0.06); ctx.lineTo(W*0.8,H*0.94); ctx.stroke();
+  // Halfway line
+  ctx.lineWidth=3; ctx.strokeStyle='rgba(255,255,255,0.90)';
+  ctx.beginPath(); ctx.moveTo(W/2,H*0.06); ctx.lineTo(W/2,H*0.94); ctx.stroke();
+  // In-goal areas (shaded)
+  ctx.save(); ctx.globalAlpha=0.12; ctx.fillStyle='#ffffff';
+  ctx.fillRect(W*0.04,H*0.06,W*0.16,H*0.88);
+  ctx.fillRect(W*0.80,H*0.06,W*0.16,H*0.88);
+  ctx.restore();
+  // H-shaped goal posts
+  function drawPosts(cx) {
+    ctx.strokeStyle='rgba(255,255,255,0.90)'; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.moveTo(cx,H*0.06); ctx.lineTo(cx,H*0.35); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx-W*0.07,H*0.25); ctx.lineTo(cx+W*0.07,H*0.25); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx-W*0.07,H*0.25); ctx.lineTo(cx-W*0.07,H*0.06); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx+W*0.07,H*0.25); ctx.lineTo(cx+W*0.07,H*0.06); ctx.stroke();
+  }
+  drawPosts(W*0.04+W*0.04); drawPosts(W*0.96-W*0.04);
+}
+function fillRugby(ctx, x, y, w, h) {
+  // Darker olive/field green
+  ctx.fillStyle='#5a7a3a'; ctx.fillRect(x,y,w,h);
+  ctx.save(); ctx.globalAlpha=0.06; ctx.strokeStyle='#2a4010'; ctx.lineWidth=1;
+  for(let i=0;i<10;i++){ctx.beginPath();ctx.moveTo(x+i*(w/10),y);ctx.lineTo(x+i*(w/10),y+h);ctx.stroke();}
+  ctx.restore();
+  // Rugby ball centred
+  const bx=x+w/2, by=y+h/2, brx=Math.min(w,h)*0.28, bry=Math.min(w,h)*0.17;
+  const bg2=ctx.createRadialGradient(bx-brx*0.3,by-bry*0.4,brx*0.1,bx,by,brx);
+  bg2.addColorStop(0,'#a0522d'); bg2.addColorStop(1,'#6b2d0a');
+  ctx.fillStyle=bg2;
+  ctx.beginPath(); ctx.ellipse(bx,by,brx,bry,0,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#5C2D0A'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.ellipse(bx,by,brx,bry,0,0,Math.PI*2); ctx.stroke();
+  // Seam lines
+  ctx.strokeStyle='rgba(60,20,0,0.45)'; ctx.lineWidth=0.8;
+  ctx.beginPath(); ctx.moveTo(bx-brx,by); ctx.quadraticCurveTo(bx,by-bry*0.7,bx+brx,by); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(bx-brx,by); ctx.quadraticCurveTo(bx,by+bry*0.7,bx+brx,by); ctx.stroke();
+  // Lace
+  ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(bx,by-bry*0.7); ctx.lineTo(bx,by+bry*0.7); ctx.stroke();
+  ctx.lineWidth=1;
+  [-0.35,0,0.35].forEach(t=>{const ly2=by+t*bry*1.1;ctx.beginPath();ctx.moveTo(bx-brx*0.22,ly2);ctx.lineTo(bx+brx*0.22,ly2);ctx.stroke();});
+}
+const fillRugbyLeft=fillRugby, fillRugbyRight=fillRugby;
+
+// ── TENNIS ───────────────────────────────────────────────────────────────────
+function drawTennisBg(ctx, W, H) {
+  // Terracotta clay court
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#c1440e'); g.addColorStop(0.5,'#d4520f'); g.addColorStop(1,'#b03a0a');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  // Subtle texture
+  ctx.save(); ctx.globalAlpha=0.05;
+  for(let i=0;i<H;i+=4){ctx.fillStyle=i%8?'#000':'#fff';ctx.fillRect(0,i,W,2);}
+  ctx.restore();
+  // Court lines
+  ctx.strokeStyle='rgba(255,255,255,0.88)'; ctx.lineWidth=2;
+  // Outer boundary
+  ctx.strokeRect(W*0.04,H*0.06,W*0.92,H*0.88);
+  // Singles sidelines
+  ctx.beginPath(); ctx.moveTo(W*0.12,H*0.06); ctx.lineTo(W*0.12,H*0.94); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W*0.88,H*0.06); ctx.lineTo(W*0.88,H*0.94); ctx.stroke();
+  // Service boxes
+  ctx.beginPath(); ctx.moveTo(W*0.12,H*0.06+H*0.38); ctx.lineTo(W*0.88,H*0.06+H*0.38); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W*0.12,H*0.94-H*0.38); ctx.lineTo(W*0.88,H*0.94-H*0.38); ctx.stroke();
+  // Centre service line
+  ctx.beginPath(); ctx.moveTo(W/2,H*0.06+H*0.38); ctx.lineTo(W/2,H*0.94-H*0.38); ctx.stroke();
+  // Net — thicker
+  ctx.strokeStyle='rgba(255,255,255,0.95)'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(W*0.04,H/2); ctx.lineTo(W*0.96,H/2); ctx.stroke();
+  // Net posts
+  ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.moveTo(W*0.04,H*0.35); ctx.lineTo(W*0.04,H*0.65); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W*0.96,H*0.35); ctx.lineTo(W*0.96,H*0.65); ctx.stroke();
+  // Net mesh suggestion
+  ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=0.7;
+  for(let nx=W*0.04;nx<W*0.96;nx+=W*0.06){
+    ctx.beginPath(); ctx.moveTo(nx,H*0.35); ctx.lineTo(nx,H*0.65); ctx.stroke();
+  }
+}
+function fillTennis(ctx, x, y, w, h) {
+  // Grass court green background
+  ctx.fillStyle='#3a7d44'; ctx.fillRect(x,y,w,h);
+  ctx.save(); ctx.globalAlpha=0.07; ctx.strokeStyle='#1a4a22'; ctx.lineWidth=1;
+  for(let i=0;i<8;i++){ctx.beginPath();ctx.moveTo(x+i*(w/8),y);ctx.lineTo(x+i*(w/8),y+h);ctx.stroke();}
+  ctx.restore();
+  // Tennis ball centred
+  const bx=x+w/2, by=y+h/2, br=Math.min(w,h)*0.18;
+  const bg2=ctx.createRadialGradient(bx-br*0.3,by-br*0.3,br*0.1,bx,by,br);
+  bg2.addColorStop(0,'#e0ee00'); bg2.addColorStop(1,'#b8c800');
+  ctx.fillStyle=bg2;
+  ctx.beginPath(); ctx.arc(bx,by,br,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#9aaa00'; ctx.lineWidth=0.8;
+  ctx.beginPath(); ctx.arc(bx,by,br,0,Math.PI*2); ctx.stroke();
+  // Seam curves
+  ctx.strokeStyle='rgba(255,255,255,0.85)'; ctx.lineWidth=1.5; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(bx-br*0.55,by-br*0.7); ctx.quadraticCurveTo(bx-br*1.0,by,bx-br*0.55,by+br*0.7); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(bx+br*0.55,by-br*0.7); ctx.quadraticCurveTo(bx+br*1.0,by,bx+br*0.55,by+br*0.7); ctx.stroke();
+}
+const fillTennisLeft=fillTennis, fillTennisRight=fillTennis;
+
+// ─── SPORT CONFIGS — defined AFTER all fill functions so references resolve ───
+const SPORTS = {
+  hockey:     { name:'HOCKEY',     emoji:'🏒', shapeSVG:'circle',   textColor:'#ffffff', lightTicket:false, drawBg:drawHockeyBg,     fillLeft:fillPuckLeft,       fillRight:fillPuckRight },
+  soccer:     { name:'SOCCER',     emoji:'⚽', shapeSVG:'pentagon', textColor:'#ffffff', lightTicket:true,  drawBg:drawSoccerBg,     fillLeft:fillSoccerBallLeft, fillRight:fillSoccerBallRight },
+  football:   { name:'FOOTBALL',   emoji:'🏈', shapeSVG:'oval',     textColor:'#ffffff', lightTicket:false, drawBg:drawFootballBg,   fillLeft:fillFootballLeft,   fillRight:fillFootballRight },
+  baseball:   { name:'BASEBALL',   emoji:'⚾', shapeSVG:'circle',   textColor:'#1a237e', lightTicket:true,  drawBg:drawBaseballBg,   fillLeft:fillBaseballLeft,   fillRight:fillBaseballRight },
+  softball:   { name:'SOFTBALL',   emoji:'🥎', shapeSVG:'circle',   textColor:'#880e4f', lightTicket:true,  drawBg:drawSoftballBg,   fillLeft:fillSoftballLeft,   fillRight:fillSoftballRight },
+  basketball: { name:'BASKETBALL', emoji:'🏀', shapeSVG:'circle',   textColor:'#ffffff', lightTicket:false, drawBg:drawBasketballBg, fillLeft:fillBasketballLeft, fillRight:fillBasketballRight },
+  waterpolo:  { name:'WATER POLO', emoji:'🤽', shapeSVG:'circle',   textColor:'#ffffff', lightTicket:true,  drawBg:drawWaterPoloBg,  fillLeft:fillWaterPoloLeft,  fillRight:fillWaterPoloRight },
+  volleyball: { name:'VOLLEYBALL', emoji:'🏐', shapeSVG:'circle',   textColor:'#1a237e', lightTicket:true,  drawBg:drawVolleyballBg, fillLeft:fillVolleyballLeft, fillRight:fillVolleyballRight },
+  ringette:   { name:'RINGETTE',   emoji:'🔵', shapeSVG:'circle',   textColor:'#ffffff', lightTicket:true,  drawBg:drawRingetteBg,   fillLeft:fillRingetteLeft,   fillRight:fillRingetteRight },
+  curling:    { name:'CURLING',    emoji:'🥌', shapeSVG:'circle',   textColor:'#ffffff', lightTicket:false, drawBg:drawCurlingBg,    fillLeft:fillCurlingLeft,    fillRight:fillCurlingRight },
+  gymnastics:    { name:'GYMNASTICS',     emoji:'🤸', shapeSVG:'circle', textColor:'#ffffff', lightTicket:false, drawBg:drawGymnasticsBg,      fillLeft:fillGymnasticsLeft,      fillRight:fillGymnasticsRight },
+  golf:          { name:'GOLF',           emoji:'⛳', shapeSVG:'circle', textColor:'#1b5e20', lightTicket:true,  drawBg:drawGolfBg,           fillLeft:fillGolfLeft,           fillRight:fillGolfRight },
+  figureskating: { name:'FIGURE SKATING', emoji:'⛸️', shapeSVG:'circle', textColor:'#0d47a1', lightTicket:true,  drawBg:drawFigureSkatingBg,  fillLeft:fillFigureSkatingLeft,  fillRight:fillFigureSkatingRight },
+  lacrosse:      { name:'LACROSSE',       emoji:'🥍', shapeSVG:'circle', textColor:'#1b5e20', lightTicket:true,  drawBg:drawLacrosseBg,       fillLeft:fillLacrosseLeft,       fillRight:fillLacrosseRight },
+  rugby:         { name:'RUGBY',          emoji:'🏉', shapeSVG:'oval',   textColor:'#ffffff', lightTicket:false, drawBg:drawRugbyBg,          fillLeft:fillRugbyLeft,          fillRight:fillRugbyRight },
+  tennis:        { name:'TENNIS',         emoji:'🎾', shapeSVG:'circle', textColor:'#ffffff', lightTicket:false, drawBg:drawTennisBg,         fillLeft:fillTennisLeft,         fillRight:fillTennisRight },
+};
+
+// ─── MAIN GENERATE ────────────────────────────────────────────────────────────
+function generatePoster() {
+  if (currentMode==='sport') generateSportPoster();
+  else generateStandardPoster();
+}
+
+// ─── STANDARD POSTER (original) ───────────────────────────────────────────────
+function generateStandardPoster() {
+  const canvas=document.getElementById('preview');
+  const ctx=canvas.getContext('2d');
+  const orgName=document.getElementById('orgName').value||'Your Organization';
+  const raffleType=document.getElementById('raffleType').value;
+  const showDetails=document.getElementById('toggleSwitch').classList.contains('active');
+  const file=document.getElementById('logoUpload').files[0];
+  if(!file){alert('Please upload a logo/image');return;}
+
+  const prizeFileEarly=raffleType==='prize'?document.getElementById('prizeImageUpload').files[0]:null;
+  const hasPrizeFileEarly=prizeFileEarly&&!document.getElementById('prizeImageUpload').disabled;
+
+  function doRender(preloadedPrizeImg) {
+    const img=new Image();
+    img.onload=()=>{
+      const colorThief=new ColorThief();
+      const palette=colorThief.getPalette(img,8);
+      function getSat(r,g,b){const mx=Math.max(r,g,b),mn=Math.min(r,g,b);return mx===0?0:(mx-mn)/mx;}
+      function getBri(r,g,b){return Math.max(r,g,b)/255;}
+      let totalSat=0;
+      for(const c of palette) totalSat+=getSat(...c);
+      const isGray=(totalSat/palette.length)<0.15;
+      let best=palette[0], bestS=-1;
+      for(const c of palette){
+        const[r,g,b]=c, sat=getSat(r,g,b), bri=getBri(r,g,b);
+        if(bri>0.85) continue;
+        const score=isGray?1-bri:sat*(1-bri*0.5);
+        if(score>bestS){bestS=score;best=c;}
+      }
+      const primaryColor=`rgb(${best.join(',')})`;
+      const secondaryColor=`rgb(${palette[1].join(',')})`;
+      const accentColor=`rgb(${palette[2].join(',')})`;
+      const colorDiff=Math.sqrt(Math.pow(palette[0][0]-palette[1][0],2)+Math.pow(palette[0][1]-palette[1][1],2)+Math.pow(palette[0][2]-palette[1][2],2));
+      const isSingleColored=colorDiff<50;
+      const W=canvas.width, H=canvas.height;
+      const g=ctx.createLinearGradient(0,0,W,H);
+      g.addColorStop(0,secondaryColor); g.addColorStop(0.5,accentColor); g.addColorStop(1,primaryColor);
+      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+      ctx.save(); ctx.globalAlpha=0.12; ctx.strokeStyle='white'; ctx.lineWidth=1.5;
+      for(let i=-H;i<W+H;i+=28){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i+H,H);ctx.stroke();}
+      ctx.restore();
+      const vig=ctx.createRadialGradient(W/2,H/2,H*0.2,W/2,H/2,H*0.9);
+      vig.addColorStop(0,'rgba(0,0,0,0)'); vig.addColorStop(1,'rgba(0,0,0,0.35)');
+      ctx.fillStyle=vig; ctx.fillRect(0,0,W,H);
+      const margin=44, gap=60, tw=(W-margin*2-gap)/2, th=H-margin*2;
+      const lx=margin, rx=margin+tw+gap, ry=tw;
+      const lWhite=hasWhiteBackground(img);
+      const rWhite=preloadedPrizeImg&&hasWhiteBackground(preloadedPrizeImg);
+      drawStdTicket(ctx,lx,margin,tw,th,'left',lWhite?'#ffffff':null);
+      drawStdTicket(ctx,rx,margin,tw,th,'right',rWhite?'#ffffff':null);
+      // Logo
+      const ls=280, lx2=lx+(tw-ls)/2, ly2=margin+55;
+      const sc=Math.min(ls/img.width,ls/img.height);
+      ctx.drawImage(img,lx2+(ls-img.width*sc)/2,ly2+(ls-img.height*sc)/2,img.width*sc,img.height*sc);
+      const divY=ly2+ls+20;
+      drawOrnDiv(ctx,lx+tw/2,divY,tw*0.35,primaryColor);
+      ctx.fillStyle=primaryColor; ctx.font='bold 30px "Helvetica Neue",Helvetica,Arial,sans-serif';
+      ctx.textAlign='center';
+      wrapText(ctx,orgName.toUpperCase(),lx+tw/2,divY+36,tw-70,36);
+      if(showDetails){
+        const lic=document.getElementById('licenceNumber').value;
+        if(lic){ctx.fillStyle=primaryColor;ctx.globalAlpha=0.65;ctx.font='14px "Helvetica Neue",Helvetica,Arial,sans-serif';ctx.textAlign='center';ctx.fillText(`Licence ${lic}`,lx+tw/2,margin+th-24);ctx.globalAlpha=1;}
+      }
+      const hasPrize=raffleType==='prize'&&document.getElementById('prizeImageUpload').files[0]&&!document.getElementById('prizeImageUpload').disabled;
+      const enlarge=!showDetails&&!hasPrize, sm=enlarge?1.2:1.0;
+      const rtx=rx+tw/2, rty=enlarge?margin+th/2-20:(raffleType==='5050'?220:180);
+      ctx.fillStyle=primaryColor; ctx.textAlign='center'; ctx.strokeStyle=secondaryColor; ctx.lineWidth=0.5;
+      const mainTxt=raffleType==='5050'?'50/50':'PRIZE';
+      ctx.font=`bold ${Math.round((raffleType==='5050'?119:120)*sm)}px Impact,"Arial Black",sans-serif`;
+      const lts=raffleType==='5050'?6*sm:8*sm;
+      const ltw=mainTxt.split('').reduce((s,l)=>s+ctx.measureText(l).width+lts,0)-lts;
+      let xp=rtx-ltw/2;
+      mainTxt.split('').forEach(l=>{const lw=ctx.measureText(l).width;if(!isSingleColored)ctx.strokeText(l,xp+lw/2,rty);ctx.fillText(l,xp+lw/2,rty);xp+=lw+lts;});
+      const subY=rty+Math.round(64*sm);
+      ctx.font=`bold ${Math.round(48*sm)}px "Helvetica Neue",Helvetica,Arial,sans-serif`;
+      if(!isSingleColored)ctx.strokeText('RAFFLE',rtx,subY);
+      ctx.fillText('RAFFLE',rtx,subY);
+      drawOrnDiv(ctx,rtx,subY+Math.round(18*sm),tw*0.3,primaryColor);
+      let dsY=rty+Math.round((raffleType==='5050'?102:140)*sm);
+      if(raffleType==='prize'&&hasPrize){
+        const pf=document.getElementById('prizeImageUpload').files[0];
+        const pi=preloadedPrizeImg||new Image();
+        function rp(){
+          // Proper fit: scale to fill available space while preserving aspect ratio
+          const mpw=tw-80, maxH=showDetails?170:260;
+          const ia=pi.width/pi.height, ba=mpw/maxH;
+          let pw,ph; if(ia>ba){pw=mpw;ph=pw/ia;}else{ph=maxH;pw=ph*ia;}
+          // Remove white/light background
+          const off=document.createElement('canvas'); off.width=pi.width; off.height=pi.height;
+          const offCtx=off.getContext('2d'); offCtx.drawImage(pi,0,0);
+          const imgData=offCtx.getImageData(0,0,pi.width,pi.height); const d=imgData.data;
+          for(let p=0;p<d.length;p+=4){
+            const r=d[p],g=d[p+1],b=d[p+2],brightness=(r+g+b)/3,maxC=Math.max(r,g,b),minC=Math.min(r,g,b),sat=maxC===0?0:(maxC-minC)/maxC;
+            if(brightness>210&&sat<0.15){d[p+3]=0;}
+          }
+          offCtx.putImageData(imgData,0,0);
+          ctx.drawImage(off, rtx-pw/2, dsY, pw, ph);
+          dsY=dsY+ph+16;
+          drawStdDetails(ctx,showDetails,rx,tw,margin,th,rtx,dsY,raffleType,primaryColor);
+        }
+        if(preloadedPrizeImg)rp();else{pi.onload=rp;pi.src=URL.createObjectURL(pf);}
+        return;
+      }
+      drawStdDetails(ctx,showDetails,rx,tw,margin,th,rtx,dsY,raffleType,primaryColor);
+    };
+    img.src=URL.createObjectURL(file);
+  }
+  if(hasPrizeFileEarly){const ep=new Image();ep.onload=()=>doRender(ep);ep.src=URL.createObjectURL(prizeFileEarly);}
+  else doRender(null);
+}
+
+function drawStdTicket(ctx,x,y,w,h,side,fill){
+  const cr=22;
+  ctx.save();ctx.shadowColor='rgba(0,0,0,0.52)';ctx.shadowBlur=26;ctx.shadowOffsetX=3;ctx.shadowOffsetY=8;ctx.fillStyle='white';scalloppedRect(ctx,x,y,w,h,cr,side);ctx.fill();ctx.restore();
+  ctx.save();ctx.shadowColor='rgba(0,0,0,0.22)';ctx.shadowBlur=55;ctx.shadowOffsetX=0;ctx.shadowOffsetY=18;ctx.fillStyle='white';scalloppedRect(ctx,x,y,w,h,cr,side);ctx.fill();ctx.restore();
+  ctx.save();
+  if(fill){ctx.fillStyle=fill;}else{const pg=ctx.createLinearGradient(x,y,x,y+h);pg.addColorStop(0,'#fff');pg.addColorStop(0.3,'#fdfbf8');pg.addColorStop(0.7,'#faf7f2');pg.addColorStop(1,'#f4f0ea');ctx.fillStyle=pg;}
+  scalloppedRect(ctx,x,y,w,h,cr,side);ctx.fill();ctx.restore();
+  ctx.save();scalloppedRect(ctx,x,y,w,h,cr,side);ctx.clip();ctx.globalAlpha=0.022;ctx.strokeStyle='#666';ctx.lineWidth=0.5;for(let r=y+3;r<y+h;r+=4){ctx.beginPath();ctx.moveTo(x,r);ctx.lineTo(x+w,r);ctx.stroke();}ctx.restore();
+  ctx.save();ctx.globalAlpha=0.65;ctx.strokeStyle='rgba(255,255,255,0.95)';ctx.lineWidth=1.5;scalloppedRect(ctx,x+1.5,y+1.5,w-3,h-3,Math.max(1,cr-1.5),side);ctx.stroke();ctx.restore();
+  ctx.save();ctx.globalAlpha=0.14;ctx.strokeStyle='rgba(0,0,0,1)';ctx.lineWidth=1;scalloppedRect(ctx,x+3,y+3,w-6,h-6,Math.max(1,cr-3),side);ctx.stroke();ctx.restore();
+  ctx.save();ctx.strokeStyle='rgba(160,145,120,0.4)';ctx.lineWidth=1;scalloppedRect(ctx,x,y,w,h,cr,side);ctx.stroke();ctx.restore();
+}
+
+function drawOrnDiv(ctx,cx,y,hw,color){
+  ctx.save();ctx.globalAlpha=0.4;ctx.strokeStyle=color;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(cx-hw,y);ctx.lineTo(cx-8,y);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx+8,y);ctx.lineTo(cx+hw,y);ctx.stroke();
+  ctx.fillStyle=color;ctx.globalAlpha=0.6;ctx.save();ctx.translate(cx,y);ctx.rotate(Math.PI/4);ctx.fillRect(-4,-4,8,8);ctx.restore();
+  ctx.restore();
+}
+
+function drawStdDetails(ctx,showDetails,rx,tw,margin,th,rtx,curY,raffleType,textColor){
+  if(!showDetails){finaliseDownload();return;}
+  const maxY=margin+th-50, avail=maxY-curY, content=[];
+  if(raffleType==='prize'){const pd=document.getElementById('prizeDescription').value;if(pd)content.push({type:'prizeDesc',text:pd,bf:20,lh:26});}
+  const pkgs=[];document.querySelectorAll('.package-row').forEach(r=>{const t=r.querySelector('.package-tickets').value,p=r.querySelector('.package-price').value;if(t&&p)pkgs.push(`${t} ${t==1?'ticket':'tickets'}/$${Math.round(parseFloat(p))}`);});
+  if(pkgs.length>0){content.push({type:'pkgTitle',text:'Ticket Packages',bf:22,lh:35});pkgs.forEach(p=>content.push({type:'pkg',text:p,bf:19,lh:26}));}
+  const tt=document.getElementById('totalTickets').value;if(tt)content.push({type:'tt',text:`${tt} total tickets available`,bf:17,lh:28});
+  const pa=document.getElementById('prizeAmount').value;
+  if(pa&&raffleType==='5050'){const paFmt='$'+pa;content.push({type:'pa50',text:'Winner receives 50% of ticket sales,',bf:17,lh:24});content.push({type:'pa50m',text:`to a maximum prize of ${paFmt}`,bf:17,lh:28});}
+  else if(pa)content.push({type:'pa',text:`Prize: $${pa}`,bf:19,lh:28});
+  const dd=document.getElementById('drawDate').value,dt=document.getElementById('drawTime').value,dl=document.getElementById('drawLocation').value;
+  let dtxt='';
+  if(dd||dt){dtxt='Draw is ';if(dt){const[hh,mm]=dt.split(':'),h=parseInt(hh);dtxt+=`at ${h>12?h-12:(h===0?12:h)}${mm!=='00'?':'+mm:''} ${h>=12?'pm':'am'}`;}if(dd){const d=new Date(dd+'T00:00:00');dtxt+=(dt?' on ':'on ')+d.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});}}
+  if(dtxt)content.push({type:'di',text:dtxt,bf:16,lh:22,wrap:true});
+  if(dl)content.push({type:'loc',text:dl,bf:16,lh:22,wrap:true});
+  let totalH=0;content.forEach(c=>totalH+=c.wrap?c.lh*3:c.lh);
+  const sf=totalH>avail?Math.max(0.6,avail/totalH):1.0;
+  ctx.fillStyle=textColor;ctx.textAlign='center';
+  content.forEach(c=>{
+    const fs=Math.max(12,Math.floor(c.bf*sf)),lh=Math.floor(c.lh*sf);
+    ctx.font=(c.type==='pkgTitle'||c.type==='prizeDesc')?`bold ${fs}px "Helvetica Neue",Helvetica,Arial,sans-serif`:`${fs}px "Helvetica Neue",Helvetica,Arial,sans-serif`;
+    if(c.wrap){curY=wrapText(ctx,c.text,rtx,curY,tw-60,lh);curY+=lh;}
+    else{let tw2=ctx.measureText(c.text).width,afs=fs;while(tw2>tw-60&&afs>12){afs--;ctx.font=(c.type==='pkgTitle'||c.type==='prizeDesc')?`bold ${afs}px "Helvetica Neue",Helvetica,Arial,sans-serif`:`${afs}px "Helvetica Neue",Helvetica,Arial,sans-serif`;tw2=ctx.measureText(c.text).width;}if(curY+lh<=maxY){ctx.fillText(c.text,rtx,curY);curY+=lh;}}
+  });
+  finaliseDownload();
+}
+
+
+// ─── SPORT POSTER ─────────────────────────────────────────────────────────────
+function generateSportPoster() {
+  const canvas=document.getElementById('preview');
+  const ctx=canvas.getContext('2d');
+  const orgName=document.getElementById('orgName').value||'Your Team';
+  const raffleType=document.getElementById('raffleType').value;
+  const showDetails=document.getElementById('toggleSwitch').classList.contains('active');
+  const file=document.getElementById('logoUpload').files[0];
+  if(!file){alert('Please upload a logo/image');return;}
+
+  const sport=SPORTS[currentSport];
+  const W=canvas.width, H=canvas.height;
+  const img=new Image();
+  img.onload=()=>{
+    const accentColor=getDominantColor(img);
+
+    // Extract full palette for lightest/darkest colour (text stroke and soccer shape stroke)
+    let logoPalette=[[80,80,80]];
+    try { logoPalette=new ColorThief().getPalette(img,8); } catch(e){}
+    let lightestColor=[255,255,255], lightestLum=-1;
+    let darkestColor=[0,0,0], darkestLum=2;
+    for(const [r,g,b] of logoPalette){
+      const lum=(0.299*r+0.587*g+0.114*b)/255;
+      if(lum>lightestLum){lightestLum=lum; lightestColor=[r,g,b];}
+      if(lum<darkestLum){darkestLum=lum; darkestColor=[r,g,b];}
+    }
+
+    // 1. Background + vignette
+    sport.drawBg(ctx,W,H);
+    const ov=ctx.createRadialGradient(W/2,H/2,H*0.1,W/2,H/2,H*0.85);
+    ov.addColorStop(0,'rgba(0,0,0,0.08)'); ov.addColorStop(1,'rgba(0,0,0,0.45)');
+    ctx.fillStyle=ov; ctx.fillRect(0,0,W,H);
+
+    // 2. Ticket geometry
+    const margin=40, gap=60, cr=18;
+    const tw=(W-margin*2-gap)/2, th=H-margin*2;
+    const lx=margin, ly=margin, rx=margin+tw+gap, ry=margin;
+
+    function drawTicket(tx,ty,side,fillFn){
+      // Layer 1: tight drop shadow
+      ctx.save(); ctx.shadowColor='rgba(0,0,0,0.52)'; ctx.shadowBlur=26; ctx.shadowOffsetX=3; ctx.shadowOffsetY=8;
+      ctx.fillStyle='white'; scalloppedRect(ctx,tx,ty,tw,th,cr,side); ctx.fill(); ctx.restore();
+      // Layer 2: wider ambient shadow
+      ctx.save(); ctx.shadowColor='rgba(0,0,0,0.22)'; ctx.shadowBlur=55; ctx.shadowOffsetX=0; ctx.shadowOffsetY=18;
+      ctx.fillStyle='white'; scalloppedRect(ctx,tx,ty,tw,th,cr,side); ctx.fill(); ctx.restore();
+      // Layer 3: warm white base fill (same gradient as std ticket)
+      ctx.save();
+      const pg=ctx.createLinearGradient(tx,ty,tx,ty+th);
+      pg.addColorStop(0,'#fff'); pg.addColorStop(0.3,'#fdfbf8'); pg.addColorStop(0.7,'#faf7f2'); pg.addColorStop(1,'#f4f0ea');
+      ctx.fillStyle=pg; scalloppedRect(ctx,tx,ty,tw,th,cr,side); ctx.fill(); ctx.restore();
+      // Layer 4: sport texture clipped inside
+      ctx.save(); scalloppedRect(ctx,tx,ty,tw,th,cr,side); ctx.clip(); fillFn(ctx,tx,ty,tw,th); ctx.restore();
+      // Layer 5: subtle horizontal line texture (same as std)
+      ctx.save(); scalloppedRect(ctx,tx,ty,tw,th,cr,side); ctx.clip();
+      ctx.globalAlpha=0.022; ctx.strokeStyle='#666'; ctx.lineWidth=0.5;
+      for(let rl=ty+3;rl<ty+th;rl+=4){ctx.beginPath();ctx.moveTo(tx,rl);ctx.lineTo(tx+tw,rl);ctx.stroke();}
+      ctx.restore();
+      // Layer 6: inner white highlight border
+      ctx.save(); ctx.globalAlpha=0.65; ctx.strokeStyle='rgba(255,255,255,0.95)'; ctx.lineWidth=1.5;
+      scalloppedRect(ctx,tx+1.5,ty+1.5,tw-3,th-3,Math.max(1,cr-1.5),side); ctx.stroke(); ctx.restore();
+      // Layer 7: subtle inner dark border
+      ctx.save(); ctx.globalAlpha=0.14; ctx.strokeStyle='rgba(0,0,0,1)'; ctx.lineWidth=1;
+      scalloppedRect(ctx,tx+3,ty+3,tw-6,th-6,Math.max(1,cr-3),side); ctx.stroke(); ctx.restore();
+      // Layer 8: warm outer stroke
+      ctx.save(); ctx.strokeStyle='rgba(160,145,120,0.4)'; ctx.lineWidth=1;
+      scalloppedRect(ctx,tx,ty,tw,th,cr,side); ctx.stroke(); ctx.restore();
+    }
+    drawTicket(lx,ly,'left',sport.fillLeft);
+    drawTicket(rx,ry,'right',sport.fillRight);
+
+    // 3. Sport shape backdrops
+    const lcx=lx+tw/2, rcx=rx+tw/2;
+    ctx.save(); scalloppedRect(ctx,lx,ly,tw,th,cr,'left'); ctx.clip();
+    const lShape=drawSportBackdrop(ctx,lx,ly,tw,th,currentSport,accentColor,darkestColor); ctx.restore();
+    ctx.save(); scalloppedRect(ctx,rx,ry,tw,th,cr,'right'); ctx.clip();
+    const rShape=drawSportBackdrop(ctx,rx,ry,tw,th,currentSport,accentColor,darkestColor); ctx.restore();
+
+    // 4. Text colour — contrast against the ticket background
+    let accentTextCol;
+    {
+      const [ar,ag,ab]=accentColor;
+      const lum=(0.299*ar+0.587*ag+0.114*ab)/255;
+      accentTextCol = sport.lightTicket
+        ? (lum<0.72 ? `rgb(${ar},${ag},${ab})` : '#1a1a1a')
+        : '#ffffff';
+    }
+
+    // 5. Does the right ticket need the raffle label above the shape?
+    //    Only when a prize image is uploaded OR additional details are on.
+    const hasPrizeImg=raffleType==='prize'&&document.getElementById('prizeImageUpload').files[0]&&!document.getElementById('prizeImageUpload').disabled;
+    const raffleAbove = hasPrizeImg || showDetails;
+
+    // 6. Header zone (ticket top → shape top) — used for org name always,
+    //    and for raffle label only when raffleAbove is true.
+    const shapeTop  = lShape.cy - lShape.R;
+    const headerTop = ly + 10;
+    const headerBot = shapeTop - 10;
+    const headerH   = Math.max(headerBot - headerTop, 1);
+
+    // ── Header text sizing — org name may wrap to 2 lines ──────────────────────
+    const orgLabel    = orgName.toUpperCase();
+    const raffleLabel = raffleType==='5050' ? '50/50 RAFFLE' : 'PRIZE RAFFLE';
+    const maxTxtW     = tw - 44;  // generous inset so text never flush to scalloped edge
+
+    // Split org name into at most 2 lines at the best word boundary
+    function splitToLines(text, maxW, font) {
+      // Use measSpaced for accurate width with letter spacing
+      const measure = (t) => measSpaced(t, headerFS);
+      if(measure(text) <= maxW) return [text]; // fits on one line
+      const words = text.split(' ');
+      if(words.length < 2) return [text]; // single word — can't split
+      // Try every split point, pick the one that minimises the max line width
+      let bestLines = [text], bestMax = Infinity;
+      for(let i=1;i<words.length;i++){
+        const l1=words.slice(0,i).join(' '), l2=words.slice(i).join(' ');
+        const maxW2=Math.max(measure(l1),measure(l2));
+        if(maxW2<bestMax){bestMax=maxW2;bestLines=[l1,l2];}
+      }
+      return bestLines;
+    }
+
+    // ── measSpaced: measure rendered width including per-char letter gap ────────
+    function measSpaced(text, fs) {
+      ctx.font = `900 ${fs}px Impact,"Arial Black",sans-serif`;
+      ctx.letterSpacing = (fs * 0.08) + 'px';
+      const w = ctx.measureText(text).width;
+      ctx.letterSpacing = '0px';
+      return w;
+    }
+
+    // ── Find largest headerFS where all labels fit ────────────────────────────
+    let headerFS = Math.min(Math.round(headerH * 0.88), 48);
+    let orgLines = [orgLabel];
+
+    for(; headerFS >= 10; headerFS--) {
+      const fstr = `900 ${headerFS}px Impact,"Arial Black",sans-serif`;
+      orgLines = splitToLines(orgLabel, maxTxtW, fstr);
+      const lineH2   = headerFS * 1.1;
+      const blockH2  = orgLines.length * lineH2;
+      const orgOk    = orgLines.every(l => measSpaced(l, headerFS) <= maxTxtW);
+      const rafOk    = !raffleAbove || measSpaced(raffleLabel, headerFS) <= maxTxtW;
+      const heightOk = blockH2 <= headerH * 0.95;
+      if(orgOk && rafOk && heightOk) break;
+    }
+    orgLines = splitToLines(orgLabel, maxTxtW, `900 ${headerFS}px Impact,"Arial Black",sans-serif`);
+    const orgLineH  = headerFS * 1.1;
+    const orgBlockH = orgLines.length * orgLineH;
+
+    // Helper: draw one header line — logo-colour gradient, guaranteed readable
+    function drawStyledLine(text, cx, y) {
+      const lsEm = 0.08;
+      const lsPx = headerFS * lsEm;
+      ctx.font          = `900 ${headerFS}px Impact,"Arial Black",sans-serif`;
+      ctx.letterSpacing = lsPx + 'px';
+      ctx.textAlign     = 'center';
+      ctx.textBaseline  = 'middle';
+      ctx.lineJoin      = 'round';
+
+      // Build a logo-colour gradient fill.
+      // IMPORTANT: On dark tickets the gradient must stay light (luminance >= 0.65)
+      // so it pops off the dark sport texture. On light tickets it must stay dark.
+      const textW = ctx.measureText(text).width;
+      const tg = ctx.createLinearGradient(cx-textW/2, y-headerFS*0.5, cx-textW/2, y+headerFS*0.5);
+      const [ar,ag,ab] = accentColor;
+      const lum = (0.299*ar + 0.587*ag + 0.114*ab) / 255;
+      if (sport.lightTicket) {
+        // Light ticket — use the raw logo colour (dark enough against light bg)
+        tg.addColorStop(0,   `rgb(${ar},${ag},${ab})`);
+        tg.addColorStop(0.5, `rgb(${Math.min(255,Math.round(ar*1.15))},${Math.min(255,Math.round(ag*1.15))},${Math.min(255,Math.round(ab*1.15))})`);
+        tg.addColorStop(1,   `rgb(${ar},${ag},${ab})`);
+      } else {
+        // Dark ticket — guarantee the gradient colours are LIGHT (luminance >= 0.65).
+        // If the logo colour is already light, use it. If dark, boost it to white-ish.
+        function toLight(r,g,b) {
+          const l = (0.299*r + 0.587*g + 0.114*b) / 255;
+          if (l >= 0.65) return [r,g,b];
+          // Blend toward white until luminance target is met
+          const t = Math.min(1, (0.65 - l) / (1 - l + 0.001));
+          return [
+            Math.round(r + (255-r)*t),
+            Math.round(g + (255-g)*t),
+            Math.round(b + (255-b)*t)
+          ];
+        }
+        const [r0,g0,b0] = toLight(ar,ag,ab);
+        // Highlight: slightly brighter
+        const rH=Math.min(255,Math.round(r0*1.15)), gH=Math.min(255,Math.round(g0*1.15)), bH=Math.min(255,Math.round(b0*1.15));
+        // Shadow: slightly dimmer but still light
+        const rD=Math.round(r0*0.82), gD=Math.round(g0*0.82), bD=Math.round(b0*0.82);
+        tg.addColorStop(0,   `rgb(${rH},${gH},${bH})`);
+        tg.addColorStop(0.35,`rgb(${r0},${g0},${b0})`);
+        tg.addColorStop(0.55,`rgb(${rH},${gH},${bH})`);
+        tg.addColorStop(0.80,`rgb(${rD},${gD},${bD})`);
+        tg.addColorStop(1,   `rgb(${r0},${g0},${b0})`);
+      }
+
+      // Stroke: contrasting outline so text reads against sport texture AND the gradient
+      const strokeW = Math.max(headerFS * 0.075, 2.0);
+      ctx.lineWidth = strokeW;
+      if (sport.lightTicket) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.80)';
+      } else {
+        // On dark tickets, use a dark stroke so light gradient letters have crisp edges
+        ctx.strokeStyle = 'rgba(0,0,0,0.75)';
+      }
+      ctx.shadowColor = 'rgba(0,0,0,0)'; ctx.shadowBlur = 0;
+      ctx.strokeText(text, cx, y);
+
+      // Fill with gradient
+      ctx.fillStyle     = tg;
+      ctx.shadowColor   = sport.lightTicket ? 'rgba(0,0,0,0.22)' : 'rgba(0,0,0,0.65)';
+      ctx.shadowBlur    = sport.lightTicket ? 3 : 6;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 1;
+      ctx.fillText(text, cx, y);
+      ctx.letterSpacing = '0px';
+      ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+    }
+    // drawHeaderLabel: draws text (single line) centred in the header zone
+    function drawHeaderLabel(text, cx) {
+      ctx.save();
+      drawStyledLine(text, cx, headerTop + headerH / 2);
+      ctx.restore();
+    }
+
+    // drawOrgName: draws org name (1 or 2 lines) vertically centred in header zone
+    function drawOrgName(cx) {
+      ctx.save();
+      const blockTop = headerTop + (headerH - orgBlockH) / 2 + orgLineH * 0.5;
+      orgLines.forEach((line, i) => drawStyledLine(line, cx, blockTop + i * orgLineH));
+      ctx.restore();
+    }
+
+    // 7. Left ticket: org name always above shape (1 or 2 lines)
+    drawOrgName(lcx);
+
+    // 8. Left ticket: logo inside shape
+    {
+      const pad=0.72, sz=lShape.R*2*pad;
+      const sc=Math.min(sz/img.width,sz/img.height);
+      const iw=img.width*sc, ih=img.height*sc;
+      ctx.save(); sportShapePath(ctx,lx,ly,tw,th,currentSport); ctx.clip();
+      ctx.drawImage(img,lShape.cx-iw/2,lShape.cy-ih/2,iw,ih); ctx.restore();
+    }
+
+    drawSportBand(ctx,lx,ly,tw,th,'left',cr,sport);
+    if(showDetails){
+      const lic=document.getElementById('licenceNumber').value;
+      if(lic){
+        ctx.save();
+        const licText=`Licence ${lic}`;
+        ctx.font=`600 11px "DM Sans",sans-serif`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        const licW=ctx.measureText(licText).width+18;
+        const licY=ly+th-60;
+        // Dark pill background for readability
+        ctx.fillStyle='rgba(0,0,0,0.50)';
+        ctx.beginPath(); ctx.roundRect(lcx-licW/2,licY-9,licW,18,5); ctx.fill();
+        // Text in lightest logo colour
+        const [lr,lg,lb]=lightestLum>0.55?lightestColor:[255,255,255];
+        ctx.fillStyle=`rgb(${lr},${lg},${lb})`;
+        ctx.fillText(licText,lcx,licY);
+        ctx.restore();
+      }
+    }
+
+    // 9. Right ticket: raffle label above shape ONLY when raffleAbove, else text inside shape
+    if(raffleAbove){
+      drawHeaderLabel(raffleLabel, rcx);
+    }
+
+    // 10. Right ticket: shape content
+    function finishRightTicket(){
+      if(!raffleAbove){
+        // Default: raffle type text centered inside the shape
+        drawRaffleTextInShape(ctx,rcx,rShape,raffleType,accentTextCol,accentColor);
+      }
+      if(showDetails){
+        // Details fill the inside of the shape, vertically centred.
+        // Details fill the inside of the shape, vertically centred.
+        const shapeInnerTop = rShape.cy - rShape.R + 10;
+        drawSportDetails(ctx,showDetails,rx,tw,ry,th,rcx,shapeInnerTop,raffleType,sport,rShape,accentTextCol,accentColor);
+      }
+      drawSportBand(ctx,rx,ry,tw,th,'right',cr,sport);
+      finaliseDownload();
+    }
+
+    if(hasPrizeImg){
+      const pf=document.getElementById('prizeImageUpload').files[0];
+      const pi=new Image();
+      pi.onload=()=>{
+        const prizeClean=removeImageBackground(pi);
+        const pSz=rShape.R*2*0.72;
+        const psc=Math.min(pSz/pi.width,pSz/pi.height);
+        const pw=pi.width*psc, ph=pi.height*psc;
+        // Always draw prize image at full opacity inside the shape
+        ctx.save(); sportShapePath(ctx,rx,ry,tw,th,currentSport); ctx.clip();
+        ctx.drawImage(prizeClean,rShape.cx-pw/2,rShape.cy-ph/2,pw,ph);
+        ctx.restore();
+        finishRightTicket();
+      };
+      pi.src=URL.createObjectURL(pf);
+    } else {
+      finishRightTicket();
+    }
+  };
+  img.src=URL.createObjectURL(file);
+}
+
+// Draw 50/50 or PRIZE/RAFFLE text centered inside the sport shape.
+// Shape is always white — use dark accent or near-black.
+function drawRaffleTextInShape(ctx, rcx, shapeInfo, raffleType, accentTextCol, accentColor) {
+  const {cy, R} = shapeInfo;
+  const mainTxt = raffleType==='5050' ? '50/50' : 'PRIZE';
+  const subTxt  = 'RAFFLE';
+
+  let mfs = Math.round(R * 0.72);
+  ctx.font = `900 ${mfs}px Impact,"Arial Black",sans-serif`;
+  while(ctx.measureText(mainTxt).width > R*1.75 && mfs>24){ mfs-=2; ctx.font=`900 ${mfs}px Impact,"Arial Black",sans-serif`; }
+  const sfs=Math.round(mfs*0.42), gap=Math.round(mfs*0.1);
+  const totalH=mfs+gap+sfs;
+  const mainY=cy-totalH/2+mfs, subY=mainY+gap+sfs;
+
+  // Build logo-colour gradient — shape is WHITE so gradient must be DARK (luminance <= 0.45)
+  const tg = ctx.createLinearGradient(rcx-R, mainY-mfs, rcx-R, subY);
+  if(accentColor){
+    const [ar,ag,ab]=accentColor;
+    const lum=(0.299*ar+0.587*ag+0.114*ab)/255;
+    // Ensure colour is dark enough to read on white shape
+    function toDark(r,g,b){
+      const l=(0.299*r+0.587*g+0.114*b)/255;
+      if(l<=0.45) return [r,g,b];
+      const t=Math.min(1,(l-0.45)/(l+0.001));
+      return [Math.round(r*(1-t)), Math.round(g*(1-t)), Math.round(b*(1-t))];
+    }
+    const [r0,g0,b0]=toDark(ar,ag,ab);
+    const rH=Math.min(255,Math.round(r0*1.3)), gH=Math.min(255,Math.round(g0*1.3)), bH=Math.min(255,Math.round(b0*1.3));
+    const rD=Math.round(r0*0.7), gD=Math.round(g0*0.7), bD=Math.round(b0*0.7);
+    tg.addColorStop(0,   `rgb(${rH},${gH},${bH})`);
+    tg.addColorStop(0.35,`rgb(${r0},${g0},${b0})`);
+    tg.addColorStop(0.55,`rgb(${rH},${gH},${bH})`);
+    tg.addColorStop(0.80,`rgb(${rD},${gD},${bD})`);
+    tg.addColorStop(1,   `rgb(${r0},${g0},${b0})`);
+  } else {
+    tg.addColorStop(0,'#1a1a1a'); tg.addColorStop(1,'#1a1a1a');
+  }
+  // Sub text: same dark base colour
+  let subFill='#1a1a1a';
+  if(accentColor){
+    const [ar,ag,ab]=accentColor;
+    const lum=(0.299*ar+0.587*ag+0.114*ab)/255;
+    subFill = lum<=0.55 ? `rgb(${ar},${ag},${ab})` : '#1a1a1a';
+  }
+
+  ctx.save();
+  ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+  ctx.font=`900 ${mfs}px Impact,"Arial Black",sans-serif`;
+  const ls=raffleType==='5050'?4:6;
+  const totalLW=mainTxt.split('').reduce((s,l)=>s+ctx.measureText(l).width+ls,0)-ls;
+  let xp=rcx-totalLW/2;
+  ctx.fillStyle=tg;
+  ctx.shadowColor='rgba(0,0,0,0.18)'; ctx.shadowBlur=4; ctx.shadowOffsetX=1; ctx.shadowOffsetY=1;
+  mainTxt.split('').forEach(l=>{const lw2=ctx.measureText(l).width;ctx.fillText(l,xp+lw2/2,mainY);xp+=lw2+ls;});
+  ctx.font=`bold ${sfs}px "DM Sans","Helvetica Neue",sans-serif`;
+  ctx.fillStyle=subFill;
+  ctx.shadowColor='rgba(0,0,0,0.12)'; ctx.shadowBlur=3;
+  ctx.fillText(subTxt,rcx,subY);
+  ctx.restore();
+}
+
+
+function drawTicketBorderGlow(ctx,x,y,w,h,side,cr,color){
+  ctx.save();
+  ctx.strokeStyle=color; ctx.lineWidth=2; ctx.globalAlpha=0.5;
+  scalloppedRect(ctx,x+1,y+1,w-2,h-2,Math.max(1,cr-1),side); ctx.stroke();
+  ctx.restore();
+}
+
+function drawSportBand(ctx,x,y,w,h,side,cr,sport){
+  const bandH=50;
+  ctx.save();
+  scalloppedRect(ctx,x,y,w,h,cr,side); ctx.clip();
+  const bg=ctx.createLinearGradient(x,y+h-bandH,x+w,y+h);
+  bg.addColorStop(0,'rgba(0,0,0,0.72)'); bg.addColorStop(1,'rgba(0,0,0,0.86)');
+  ctx.fillStyle=bg; ctx.fillRect(x,y+h-bandH,w,bandH);
+  const icx=x+w/2, icy=y+h-bandH/2;
+  if(sport.name==='RINGETTE'){
+    drawRingetteRing(ctx, icx, icy, 15, 7);
+  } else if(sport.name==='SOCCER'){
+    // Draw B&W canvas soccer ball matching the selector icon
+    ctx.save();
+    ctx.beginPath(); ctx.arc(icx,icy,14,0,Math.PI*2); ctx.fillStyle='#f5f5f5'; ctx.fill();
+    drawSoccerBallBW(ctx, icx, icy, 14);
+    const sheen=ctx.createRadialGradient(icx-5,icy-5,1,icx,icy,14);
+    sheen.addColorStop(0,'rgba(255,255,255,0.40)'); sheen.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=sheen; ctx.beginPath(); ctx.arc(icx,icy,14,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  } else if(sport.name==='GOLF') {
+    // Small white golf ball with dimples
+    ctx.save();
+    const gr=ctx.createRadialGradient(icx-4,icy-4,1,icx,icy,13);
+    gr.addColorStop(0,'#ffffff'); gr.addColorStop(1,'#cccccc');
+    ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(icx,icy,13,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.15)'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.arc(icx,icy,13,0,Math.PI*2); ctx.stroke();
+    ctx.fillStyle='rgba(0,0,0,0.12)';
+    [[-4,-5],[0,-6],[4,-4],[6,0],[4,4],[0,6],[-4,4],[-6,0],[-3,1],[3,-1]].forEach(([dx,dy])=>{
+      ctx.beginPath(); ctx.arc(icx+dx,icy+dy,1.4,0,Math.PI*2); ctx.fill();
+    });
+    ctx.restore();
+  } else if(sport.name==='FIGURE SKATING') {
+    // Proper figure skate — high ankle boot, side view, white with black outlines
+    ctx.save();
+    const sx=icx-11, sy=icy-13; // offset so skate sits centred in band
+    // Main boot body path (scaled ~1.8x from SVG viewBox 26px → band ~22px)
+    const sc=0.85; // scale factor relative to SVG coords centred at (13,13)
+    function sp(x,y){return [icx + (x-13)*sc, icy-2 + (y-13)*sc];}
+    // Boot fill
+    ctx.fillStyle='#ffffff';
+    ctx.beginPath();
+    let p=sp(4,18); ctx.moveTo(p[0],p[1]);
+    p=sp(4,10);  ctx.lineTo(p[0],p[1]);
+    p=sp(9,3.5); ctx.quadraticCurveTo(...sp(6,4), p[0],p[1]);
+    p=sp(12,3);  ctx.quadraticCurveTo(...sp(10.5,3.2), p[0],p[1]);
+    p=sp(14,5);  ctx.quadraticCurveTo(...sp(13,3), p[0],p[1]);
+    p=sp(14,11); ctx.lineTo(p[0],p[1]);
+    p=sp(21,13); ctx.quadraticCurveTo(...sp(20,11), p[0],p[1]);
+    p=sp(20,17.5);ctx.quadraticCurveTo(...sp(21.5,16.5), p[0],p[1]);
+    p=sp(18,18); ctx.lineTo(p[0],p[1]);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.lineWidth=1.5; ctx.lineJoin='round'; ctx.lineCap='round'; ctx.stroke();
+    // Boot outline in white (visible on dark band)
+    ctx.strokeStyle='rgba(255,255,255,0.85)'; ctx.lineWidth=1.3;
+    // Lace line (front of boot)
+    ctx.beginPath(); let lp=sp(12,4.8); ctx.moveTo(lp[0],lp[1]);
+    [6.5,8.2,9.8].forEach(y=>{const pp=sp(11.8-(y-4.8)*0.07,y);ctx.lineTo(pp[0],pp[1]);});
+    ctx.stroke();
+    // Sole bar
+    ctx.fillStyle='rgba(255,255,255,0.9)';
+    ctx.beginPath();
+    const sl1=sp(3.5,17.5),sl2=sp(20.5,17.5),sl3=sp(20.5,19.5),sl4=sp(3.5,19.5);
+    ctx.moveTo(sl1[0],sl1[1]); ctx.lineTo(sl2[0],sl2[1]); ctx.lineTo(sl3[0],sl3[1]); ctx.lineTo(sl4[0],sl4[1]); ctx.closePath(); ctx.fill();
+    // Heel block
+    ctx.fillStyle='rgba(255,255,255,0.55)';
+    ctx.beginPath();
+    const h1=sp(3.5,17.5),h2=sp(7.5,17.5),h3=sp(7.5,19.7),h4=sp(3.5,19.7);
+    ctx.moveTo(h1[0],h1[1]); ctx.lineTo(h2[0],h2[1]); ctx.lineTo(h3[0],h3[1]); ctx.lineTo(h4[0],h4[1]); ctx.closePath(); ctx.fill();
+    // Blade
+    ctx.strokeStyle='rgba(200,220,240,0.95)'; ctx.lineWidth=2.0;
+    const b1=sp(2.5,19.5), b2=sp(22,19.5);
+    ctx.beginPath(); ctx.moveTo(b1[0],b1[1]); ctx.quadraticCurveTo((b1[0]+b2[0])/2, b1[1]-1.5*sc, b2[0],b2[1]); ctx.stroke();
+    // Toe picks
+    ctx.strokeStyle='rgba(200,220,240,0.9)'; ctx.lineWidth=1.0;
+    [[20.5,19.3,21.5,17.8],[21.8,19.4,22.8,17.9]].forEach(([x1,y1,x2,y2])=>{
+      const pp1=sp(x1,y1),pp2=sp(x2,y2);
+      ctx.beginPath(); ctx.moveTo(pp1[0],pp1[1]); ctx.lineTo(pp2[0],pp2[1]); ctx.stroke();
+    });
+    // Lace dots
+    ctx.fillStyle='rgba(255,255,255,0.6)';
+    [4.8,6.5,8.2,9.8].forEach(y=>{const pp=sp(12.2-(y-4.8)*0.07,y);ctx.beginPath();ctx.arc(pp[0],pp[1],0.9*sc,0,Math.PI*2);ctx.fill();});
+    ctx.restore();
+  } else if(sport.name==='LACROSSE') {
+    // Lacrosse stick head outline
+    ctx.save();
+    ctx.strokeStyle='rgba(255,255,255,0.90)'; ctx.lineWidth=2; ctx.lineCap='round';
+    const lhx=icx, lhy=icy, r2=12;
+    ctx.beginPath();
+    ctx.moveTo(lhx, lhy-r2);
+    ctx.bezierCurveTo(lhx+r2*0.85,lhy-r2*0.9, lhx+r2*0.85,lhy+r2*0.5, lhx,lhy+r2*0.65);
+    ctx.bezierCurveTo(lhx-r2*0.85,lhy+r2*0.5, lhx-r2*0.85,lhy-r2*0.9, lhx,lhy-r2);
+    ctx.stroke();
+    // Mesh cross lines
+    ctx.strokeStyle='rgba(255,255,255,0.55)'; ctx.lineWidth=1;
+    for(let i=-1;i<=1;i++){ctx.beginPath();ctx.moveTo(lhx+i*5,lhy-r2*0.8);ctx.lineTo(lhx+i*5,lhy+r2*0.55);ctx.stroke();}
+    for(let j=-1;j<=1;j++){const spread=r2*0.7*(1-Math.abs(j)*0.3);ctx.beginPath();ctx.moveTo(lhx-spread,lhy+j*4);ctx.lineTo(lhx+spread,lhy+j*4);ctx.stroke();}
+    // Handle
+    ctx.strokeStyle='rgba(255,255,255,0.75)'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(lhx,lhy+r2*0.65); ctx.lineTo(lhx,lhy+r2*1.3); ctx.stroke();
+    ctx.restore();
+  } else if(sport.name==='RUGBY') {
+    // Rugby ball — brown ellipse with white lace
+    ctx.save();
+    const rrx=14, rry=8;
+    const rg=ctx.createRadialGradient(icx-4,icy-3,2,icx,icy,rrx);
+    rg.addColorStop(0,'#a0522d'); rg.addColorStop(1,'#5C2D0A');
+    ctx.fillStyle=rg;
+    ctx.beginPath(); ctx.ellipse(icx,icy,rrx,rry,0,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#3a1a00'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.ellipse(icx,icy,rrx,rry,0,0,Math.PI*2); ctx.stroke();
+    ctx.strokeStyle='rgba(50,20,0,0.5)'; ctx.lineWidth=0.8;
+    ctx.beginPath(); ctx.moveTo(icx-rrx,icy); ctx.quadraticCurveTo(icx,icy-rry*0.7,icx+rrx,icy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(icx-rrx,icy); ctx.quadraticCurveTo(icx,icy+rry*0.7,icx+rrx,icy); ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,0.92)'; ctx.lineWidth=1.5; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(icx,icy-rry*0.7); ctx.lineTo(icx,icy+rry*0.7); ctx.stroke();
+    ctx.lineWidth=1;
+    [-4,0,4].forEach(dy=>{ctx.beginPath();ctx.moveTo(icx-4,icy+dy);ctx.lineTo(icx+4,icy+dy);ctx.stroke();});
+    ctx.restore();
+  } else if(sport.name==='TENNIS') {
+    // Tennis ball — yellow-green with white seam curves
+    ctx.save();
+    const tr=13;
+    const tg=ctx.createRadialGradient(icx-4,icy-4,2,icx,icy,tr);
+    tg.addColorStop(0,'#e0ee00'); tg.addColorStop(1,'#a8b800');
+    ctx.fillStyle=tg;
+    ctx.beginPath(); ctx.arc(icx,icy,tr,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#8a9a00'; ctx.lineWidth=0.7;
+    ctx.beginPath(); ctx.arc(icx,icy,tr,0,Math.PI*2); ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,0.88)'; ctx.lineWidth=2; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(icx-tr*0.55,icy-tr*0.7); ctx.quadraticCurveTo(icx-tr,icy,icx-tr*0.55,icy+tr*0.7); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(icx+tr*0.55,icy-tr*0.7); ctx.quadraticCurveTo(icx+tr,icy,icx+tr*0.55,icy+tr*0.7); ctx.stroke();
+    ctx.restore();
+  } else {
+    ctx.font=`28px serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle='white';
+    ctx.fillText(sport.emoji,icx,icy);
+  }
+  ctx.restore();
+}
+
+// Reusable ringette donut ring renderer.
+// cx,cy = centre; oR = outer radius; iR = inner radius (hole)
+// Uses even-odd fill rule so the hole is genuinely transparent — shows whatever is underneath.
+function drawRingetteRing(ctx, cx, cy, oR, iR) {
+  ctx.save();
+  // Radial gradient for 3-D rubber look (light top-left → deep bottom-right)
+  const rg=ctx.createRadialGradient(cx-oR*0.35, cy-oR*0.35, 1, cx, cy, oR*1.05);
+  rg.addColorStop(0,   '#7ecbf0');
+  rg.addColorStop(0.38,'#3a9ad4');
+  rg.addColorStop(0.76,'#2176ae');
+  rg.addColorStop(1,   '#155e8a');
+  ctx.fillStyle=rg;
+  // Compound path: outer circle (CW) + inner circle (CCW) → even-odd gives clean hole
+  ctx.beginPath();
+  ctx.arc(cx, cy, oR, 0, Math.PI*2, false);   // outer — clockwise
+  ctx.arc(cx, cy, iR, 0, Math.PI*2, true);    // inner — counter-clockwise (creates hole)
+  ctx.fill('evenodd');
+  // Subtle tread groove arcs around the ring body
+  ctx.globalAlpha=0.28;
+  ctx.strokeStyle='#0d3d5e';
+  ctx.lineWidth=1.0;
+  const rm=(oR+iR)/2;
+  for(let i=0;i<10;i++){
+    const a=i*Math.PI/5;
+    ctx.beginPath(); ctx.arc(cx,cy,rm,a,a+0.20); ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+  // Gloss sheen arc at top-left
+  ctx.strokeStyle='rgba(255,255,255,0.60)';
+  ctx.lineWidth=oR>12 ? 2.2 : 1.4;
+  ctx.lineCap='round';
+  ctx.beginPath(); ctx.arc(cx,cy,oR*0.76,Math.PI*1.08,Math.PI*1.62); ctx.stroke();
+  ctx.restore();
+}
+
+function drawSportDetails(ctx,showDetails,rx,tw,ry,th,rcx,startY,raffleType,sport,shapeInfo,textCol,accentColor){
+  if(!showDetails) return;
+
+  // ── Shape geometry ─────────────────────────────────────────────────────────
+  const cy   = shapeInfo ? shapeInfo.cy : ry+th/2;
+  const R    = shapeInfo ? shapeInfo.R  : Math.min(tw,th)*0.40;
+  const pad  = R * 0.12;          // padding from shape edge to text
+  const top  = cy - R + pad;
+  const bot  = cy + R - pad;
+  const avail = bot - top;
+
+  // ── Collect raw items ──────────────────────────────────────────────────────
+  const rawItems = [];
+  if(raffleType==='prize'){const pd=document.getElementById('prizeDescription').value;if(pd)rawItems.push({text:pd,bold:true});}
+  const pkgs=[];
+  document.querySelectorAll('.package-row').forEach(r=>{
+    const t=r.querySelector('.package-tickets').value,p=r.querySelector('.package-price').value;
+    if(t&&p)pkgs.push(`${t} ${t==1?'ticket':'tickets'} / $${Math.round(parseFloat(p))}`);
+  });
+  if(pkgs.length>0){rawItems.push({text:'Ticket Packages',bold:true});pkgs.forEach(p=>rawItems.push({text:p,bold:false}));}
+  const tt=document.getElementById('totalTickets').value;
+  if(tt)rawItems.push({text:`${tt} tickets available`,bold:false});
+  const pa=document.getElementById('prizeAmount').value;
+  if(pa&&raffleType==='5050')rawItems.push({text:`50% of sales — max: $${pa}`,bold:false});
+  else if(pa)rawItems.push({text:`Prize: $${pa}`,bold:true});
+  const dd=document.getElementById('drawDate').value,dt=document.getElementById('drawTime').value,dl=document.getElementById('drawLocation').value;
+  let dtxt='';
+  if(dd||dt){dtxt='Draw: ';if(dt){const[hh,mm]=dt.split(':'),h=parseInt(hh);dtxt+=`${h>12?h-12:(h===0?12:h)}${mm!=='00'?':'+mm:''} ${h>=12?'pm':'am'}`;}if(dd){const d2=new Date(dd+'T00:00:00');dtxt+=(dt?' · ':'')+d2.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}}
+  if(dtxt)rawItems.push({text:dtxt,bold:false});
+  if(dl)rawItems.push({text:dl,bold:false});
+  if(rawItems.length===0) return;
+
+  // ── Text colour — shape interior is always white, so always use dark text ──
+  // accentTextCol passed in may be white (for dark-ticket sports like hockey/football),
+  // which would be invisible against the white shape. Force near-black for readability.
+  // Text colour: use logo colour if dark enough to read on white shape, else near-black
+  let detailColor = '#1a1a1a';
+  if(accentColor){
+    const [ar,ag,ab]=accentColor;
+    const lum=(0.299*ar+0.587*ag+0.114*ab)/255;
+    detailColor = lum<=0.55 ? `rgb(${ar},${ag},${ab})` : '#1a1a1a';
+  }
+
+  // ── Find the largest font that fits all lines vertically + horizontally ────
+  // Strategy: start at a generous size, expand items into wrapped lines,
+  // measure total block height, scale to fill ~88% of avail height.
+  function measureLines(fs) {
+    const lineH = fs * 1.22;
+    let lines = [];
+    for(const item of rawItems){
+      const font = `${item.bold?'bold ':' '}${fs}px "DM Sans","Helvetica Neue",sans-serif`;
+      ctx.font = font;
+      // For each item, wrap words to fit within the chord at that vertical position
+      const words = item.text.split(' ');
+      let line = '', lineLines = [];
+      for(const w of words){
+        const test = line ? line+' '+w : w;
+        // Use conservative chord = R*1.55 (mid-circle chord; items near edge get natural clip)
+        if(ctx.measureText(test).width > R*1.55 && line){ lineLines.push({text:line,bold:item.bold}); line=w; }
+        else line=test;
+      }
+      if(line) lineLines.push({text:line,bold:item.bold});
+      lines = lines.concat(lineLines);
+    }
+    return {lines, lineH, totalH: lines.length * lineH};
+  }
+
+  // Binary-search for best font size that fills ~88% of available height
+  let lo=8, hi=Math.min(28, Math.floor(avail*0.88));
+  let bestFS = lo, bestMeasure = measureLines(lo);
+  while(lo<=hi){
+    const mid=Math.floor((lo+hi)/2);
+    const m=measureLines(mid);
+    if(m.totalH <= avail*0.92){ bestFS=mid; bestMeasure=m; lo=mid+1; }
+    else hi=mid-1;
+  }
+  const {lines, lineH, totalH} = bestMeasure;
+
+  // ── Vertical centering: start so block is centred in shape ────────────────
+  const blockStartY = cy - totalH/2 + lineH*0.82; // 0.82 ≈ alphabetic baseline offset
+
+  // ── Draw ──────────────────────────────────────────────────────────────────
+  ctx.save();
+  if(shapeInfo){ sportShapePath(ctx,rx,ry,tw,th,currentSport); ctx.clip(); }
+  ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+
+  lines.forEach((ln,i) => {
+    const y = blockStartY + i*lineH;
+    if(y > bot) return; // clip overflow
+    const font = `${ln.bold?'bold ':' '}${bestFS}px "DM Sans","Helvetica Neue",sans-serif`;
+    ctx.font = font;
+    ctx.fillStyle=detailColor;
+    ctx.shadowColor='rgba(0,0,0,0.20)';
+    ctx.shadowBlur=2; ctx.shadowOffsetX=0; ctx.shadowOffsetY=1;
+    ctx.fillText(ln.text,rcx,y);
+  });
+  ctx.restore();
+}
+
+function finaliseDownload(){
+  const dl=document.getElementById('downloadLink');
+  dl.href=document.getElementById('preview').toDataURL('image/png');
+  dl.style.display='inline-block';
+}
+
+</script>
+</body>
+</html>
